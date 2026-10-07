@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Медновости РК</title>
+<link rel="alternate" type="application/rss+xml" title="Медновости РК" href="feed.xml">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1b1d21;--muted:#646a73;--line:#e1e4e8;--accent:#0b57d0;--accent-bg:#e8f0fe;--star:#e8a400;--chip:#eef0f3}
+@media (prefers-color-scheme:dark){:root{--bg:#121417;--card:#1b1e23;--text:#e6e8eb;--muted:#9aa1ab;--line:#2c3036;--accent:#8ab4f8;--accent-bg:#1f2b3d;--star:#f5c04a;--chip:#262a30}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-bottom:12px}
+h1{font-size:22px;margin:0}
+.muted{color:var(--muted);font-size:13px}
+a{color:var(--accent)}
+.tabs{display:flex;gap:6px;margin:8px 0}
+.tab,.chip,button,select,input{font:inherit;color:inherit}
+.tab{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;cursor:pointer}
+.tab[aria-pressed=true]{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:600}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.controls input,.controls select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;min-width:0}
+.controls input{flex:1 1 220px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.chip{border:1px solid transparent;background:var(--chip);border-radius:999px;padding:4px 10px;cursor:pointer;font-size:13px}
+.chip[aria-pressed=true]{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.chip b{font-weight:600;margin-left:4px;opacity:.7}
+ul{list-style:none;padding:0;margin:0}
+li.item{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;display:flex;gap:10px}
+.score{flex:0 0 34px;height:34px;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:14px;background:var(--chip)}
+.score.s-hi{background:#d93025;color:#fff}.score.s-mid{background:#f29900;color:#fff}
+.body{flex:1;min-width:0}
+.title{font-weight:600;text-decoration:none;color:var(--text);overflow-wrap:anywhere}
+.title:hover{color:var(--accent);text-decoration:underline}
+.title:visited{color:var(--muted)}
+.meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.sum{font-size:13.5px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tag{display:inline-block;background:var(--chip);border-radius:4px;padding:0 5px;margin:2px 3px 0 0;font-size:12px}
+.star{flex:0 0 auto;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px;align-self:flex-start}
+.star[aria-pressed=true]{color:var(--star)}
+.note{width:100%;margin-top:6px;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:4px 8px;font-size:13px}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.tools button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px}
+footer{margin:24px 0 8px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Медновости РК</h1><span class="muted" id="updated">Загрузка…</span></header>
+
+<div class="tabs">
+  <button class="tab" id="tab-all" aria-pressed="true">Все новости</button>
+  <button class="tab" id="tab-fav" aria-pressed="false">★ Избранное <span id="fav-count"></span></button>
+</div>
+
+<div class="controls">
+  <input id="q" type="search" placeholder="Поиск по заголовку, тексту, источнику">
+  <select id="sort">
+    <option value="score">Сначала важные</option>
+    <option value="date">Сначала новые</option>
+  </select>
+  <select id="period">
+    <option value="3">3 дня</option>
+    <option value="7">7 дней</option>
+    <option value="30" selected>30 дней</option>
+  </select>
+  <select id="source"><option value="">Все источники</option></select>
+</div>
+<div class="chips" id="chips"></div>
+
+<div class="tools" id="fav-tools" hidden>
+  <button id="export">Скачать избранное (JSON)</button>
+  <button id="copy">Скопировать списком</button>
+  <button id="import-btn" type="button">Загрузить из файла</button><input id="import" type="file" accept=".json" hidden>
+</div>
+
+<ul id="list"></ul>
+
+<footer>
+  Важность: вес рубрики (лаборатория 5, оборудование и изделия 3, стройки и приказы 2) + по баллу за каждое найденное ключевое слово.
+  Избранное хранится в этом браузере.<br>
+  RSS: <a href="feed.xml">все рубрики</a> · <a href="lab.xml">лаборатории</a> · <a href="build.xml">стройки</a> ·
+  <a href="supply.xml">закупки</a> · <a href="law.xml">приказы</a> · <a href="devices.xml">медизделия</a>
+</footer>
+</div>
+
+<script>
+const FAV_KEY = "mednews.favorites";
+const PREF_KEY = "mednews.prefs";
+const state = {data: null, view: "all", rubric: "", q: "", sort: "score", period: 30, source: ""};
+const $ = id => document.getElementById(id);
+
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+let favs = load(FAV_KEY, {});  // id -> {item, note, saved}
+Object.assign(state, load(PREF_KEY, {}), {view: "all"});
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("ru-RU", {day: "numeric", month: "short", year: "numeric"});
+}
+function scoreClass(s) { return s >= 8 ? "s-hi" : s >= 5 ? "s-mid" : ""; }
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+}
+
+function currentItems() {
+  if (state.view === "fav") return Object.values(favs).map(f => f.item);
+  const since = Date.now() - state.period * 864e5;
+  return state.data.items.filter(it => new Date(it.date) >= since);
+}
+
+function filtered() {
+  const q = state.q.trim().toLowerCase();
+  let items = currentItems().filter(it =>
+    (!state.rubric || it.rubrics.includes(state.rubric)) &&
+    (!state.source || it.source === state.source) &&
+    (!q || `${it.title} ${it.summary} ${it.source}`.toLowerCase().includes(q)));
+  const byDate = (a, b) => b.date.localeCompare(a.date);
+  items.sort(state.sort === "date" ? byDate : (a, b) => b.score - a.score || byDate(a, b));
+  return items;
+}
+
+function renderChips() {
+  const base = currentItems();
+  const chips = $("chips");
+  chips.replaceChildren();
+  const mk = (key, label, n) => el("button", {
+    class: "chip", "aria-pressed": String(state.rubric === key),
+    onclick: () => { state.rubric = key; persist(); render(); }
+  }, label, el("b", {}, String(n)));
+  chips.append(mk("", "Все рубрики", base.length));
+  for (const [key, r] of Object.entries(state.data.rubrics))
+    chips.append(mk(key, r.title, base.filter(it => it.rubrics.includes(key)).length));
+}
+
+function renderList() {
+  const list = $("list");
+  const items = filtered();
+  list.replaceChildren();
+  if (!items.length) {
+    list.append(el("li", {class: "empty"}, state.view === "fav"
+      ? "В избранном пока ничего нет. Нажмите ☆ у новости, чтобы сохранить её."
+      : "Нет новостей по выбранным условиям."));
+    return;
+  }
+  for (const it of items) {
+    const fav = favs[it.id];
+    const rubricNames = it.rubrics.map(r => state.data.rubrics[r]?.title || r).join(", ");
+    const body = el("div", {class: "body"},
+      el("a", {class: "title", href: it.link, target: "_blank", rel: "noopener"}, it.title),
+      el("div", {class: "meta"}, `${fmtDate(it.date)} · ${it.source} · ${rubricNames}`),
+      it.summary && it.summary !== it.title ? el("div", {class: "sum"}, it.summary) : null,
+      it.words?.length ? el("div", {}, ...it.words.map(w => el("span", {class: "tag"}, w))) : null);
+    if (fav) {
+      const note = el("input", {class: "note", placeholder: "Заметка к новости", value: fav.note || ""});
+      note.addEventListener("input", () => { fav.note = note.value; save(FAV_KEY, favs); });
+      body.append(note);
+    }
+    list.append(el("li", {class: "item"},
+      el("div", {class: "score " + scoreClass(it.score), title: "Важность"}, String(it.score)),
+      body,
+      el("button", {class: "star", "aria-pressed": String(!!fav), title: fav ? "Убрать из избранного" : "В избранное",
+        onclick: () => toggleFav(it)}, fav ? "★" : "☆")));
+  }
+}
+
+function render() {
+  $("tab-all").setAttribute("aria-pressed", String(state.view === "all"));
+  $("tab-fav").setAttribute("aria-pressed", String(state.view === "fav"));
+  $("fav-count").textContent = Object.keys(favs).length || "";
+  $("fav-tools").hidden = state.view !== "fav";
+  $("period").disabled = state.view === "fav";
+  renderChips();
+  renderList();
+}
+
+function toggleFav(it) {
+  if (favs[it.id]) delete favs[it.id];
+  else favs[it.id] = {item: it, note: "", saved: new Date().toISOString()};
+  save(FAV_KEY, favs);
+  render();
+}
+
+function persist() {
+  const {rubric, sort, period, source} = state;
+  save(PREF_KEY, {rubric, sort, period, source});
+}
+
+function bind() {
+  $("q").addEventListener("input", e => { state.q = e.target.value; renderList(); });
+  for (const id of ["sort", "period", "source"]) {
+    $(id).value = String(state[id]);
+    $(id).addEventListener("change", e => {
+      state[id] = id === "period" ? +e.target.value : e.target.value; persist(); render();
+    });
+  }
+  $("tab-all").onclick = () => { state.view = "all"; render(); };
+  $("tab-fav").onclick = () => { state.view = "fav"; render(); };
+  $("export").onclick = () => {
+    const blob = new Blob([JSON.stringify(Object.values(favs), null, 1)], {type: "application/json"});
+    const a = el("a", {href: URL.createObjectURL(blob), download: `izbrannoe-${new Date().toISOString().slice(0, 10)}.json`});
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  $("copy").onclick = async () => {
+    const text = filtered().map(it => `${fmtDate(it.date)} · ${it.source}\n${it.title}\n${it.link}` +
+      (favs[it.id]?.note ? `\nЗаметка: ${favs[it.id].note}` : "")).join("\n\n");
+    try { await navigator.clipboard.writeText(text); $("copy").textContent = "Скопировано"; }
+    catch { $("copy").textContent = "Не удалось скопировать"; }
+    setTimeout(() => $("copy").textContent = "Скопировать списком", 2000);
+  };
+  $("import-btn").onclick = () => $("import").click();
+  $("import").onchange = async e => {
+    try {
+      for (const f of JSON.parse(await e.target.files[0].text()))
+        if (f?.item?.id) favs[f.item.id] = f;
+      save(FAV_KEY, favs);
+      render();
+    } catch { alert("Файл не похож на выгрузку избранного"); }
+  };
+}
+
+async function init() {
+  bind();
+  try {
+    const r = await fetch("news.json", {cache: "no-cache"});
+    state.data = await r.json();
+  } catch {
+    $("updated").textContent = "Не удалось загрузить новости";
+    return;
+  }
+  // В избранном держим свежую версию новости, пока она есть в ленте.
+  for (const it of state.data.items) if (favs[it.id]) favs[it.id].item = it;
+  save(FAV_KEY, favs);
+  $("updated").textContent = `Обновлено ${new Date(state.data.updated).toLocaleString("ru-RU")} · ${state.data.items.length} новостей за 30 дней`;
+  const sources = [...new Set(state.data.items.map(it => it.source))].sort((a, b) => a.localeCompare(b, "ru"));
+  for (const s of sources) $("source").append(el("option", {value: s}, s));
+  $("source").value = state.source;
+  if ($("source").value !== state.source) state.source = "";
+  render();
+}
+init();
+</script>
+</body>
+</html>
