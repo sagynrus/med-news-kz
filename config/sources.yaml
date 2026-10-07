@@ -2,11 +2,16 @@
 # type: rss | telegram | instagram | html | json_api (сайт-приложение, новости из его API) | next_json (сайт на Next.js, новости в JSON внутри страницы) (html: страница-список, link_pattern — регулярка для ссылок на новости)
 # medical: true — профильный источник, новости не требуют медицинского контекста
 # default_rubric — рубрика, если ни одно ключевое слово не совпало (иначе новость пропускается)
+# kz: true — сайт недоступен с серверов GitHub, его скачивает компьютер в Казахстане (collect-kz.yml).
+#   Такой источник пишется одной строкой, адрес целиком в url (без params).
 sources:
   # Госорганы и закуп
   - {name: "Минздрав РК", type: telegram, channel: DenMinPR, medical: true, default_rubric: law}
-  # Недоступны с серверов GitHub (проверено 2026-10-07): gov.kz (чаще таймаут, сайт и API на JavaScript), fms.kz и msqory.kz (таймаут), adilet.zan.kz (заглушка без ссылок).
-  # Telegram NDDA и ФСМС без открытой веб-ленты. Пресс-релизы МЗ берём из Telegram выше.
+  # С серверов GitHub недоступны gov.kz, msqory.kz (ФСМС) и adilet.zan.kz: их собирает компьютер в Казахстане.
+  - {name: "Минздрав РК (gov.kz)", type: json_api, kz: true, url: "https://www.gov.kz/api/v1/public/content-manager/news?sort-by=created_date:DESC&projects=eq:dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru", medical: true}
+  - {name: "ФСМС (msqory.kz)", type: html, kz: true, url: "https://msqory.kz/ru/press-tsentr/news/", link_pattern: "msqory\\.kz/ru/press-tsentr/news/[^/?#]+", medical: true}
+  - {name: "Әділет: новые документы", type: rss, kz: true, url: "https://adilet.zan.kz/rus/docs/rss"}
+  # Telegram NDDA и ФСМС без открытой веб-ленты.
   - {name: "NDDA (НЦЭЛС)", type: json_api, url: "https://www.ndda.kz/api/news/list/", link_template: "https://www.ndda.kz/news/{slug}", medical: true}
   - {name: "СК-Фармация", type: telegram, channel: skpharmacy_kz, medical: true, default_rubric: supply}
   - {name: "Turar Healthcare", type: next_json, url: "https://turar.kz/ru/news", link_template: "https://turar.kz/ru/news/{slug}", medical: true, default_rubric: build}

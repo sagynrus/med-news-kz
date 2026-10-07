@@ -25,6 +25,37 @@ OUT = ROOT / "docs"
 KEEP_DAYS = 30
 FEED_SIZE = 200
 UA = "Mozilla/5.0 (compatible; med-news-kz/1.0; +https://github.com/sagynrus/med-news-kz)"
+# Сайты, недоступные с серверов GitHub (kz: true), скачивает компьютер в Казахстане (collect-kz.yml)
+# и кладёт сюда вместе с manifest.tsv: «файл, HTTP-код, адрес» в каждой строке.
+KZ_CACHE = os.environ.get("KZ_CACHE")
+
+
+def load_kz_cache():
+    if not KZ_CACHE:
+        return {}
+    cache = {}
+    for line in (Path(KZ_CACHE) / "manifest.tsv").read_text(encoding="utf-8-sig").splitlines():
+        if line.strip():
+            name, code, url = line.split("\t", 2)
+            cache[url.strip()] = (Path(KZ_CACHE) / name, int(code))
+    return cache
+
+
+KZ_FILES = load_kz_cache()
+
+
+def http_get(url, **kw):
+    """requests.get, а для сайтов из Казахстана — уже скачанная страница."""
+    if not KZ_CACHE:
+        return requests.get(url, **kw)
+    if url not in KZ_FILES:
+        raise RuntimeError("компьютер в Казахстане не скачал эту страницу")
+    path, code = KZ_FILES[url]
+    r = requests.models.Response()
+    r._content, r.status_code, r.url = path.read_bytes(), code, url
+    if code >= 400:
+        raise RuntimeError(f"HTTP {code}: {r.text[:300]!r}")
+    return r
 
 
 def compile_words(words):
@@ -41,7 +72,7 @@ def clean(text):
 
 
 def fetch_rss(src):
-    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=30)
+    r = http_get(src["url"], headers={"User-Agent": UA}, timeout=30)
     r.raise_for_status()
     feed = feedparser.parse(r.content)
     for e in feed.entries:
@@ -57,7 +88,7 @@ def fetch_rss(src):
 
 def fetch_telegram(src):
     url = f"https://t.me/s/{src['channel']}"
-    r = requests.get(url, headers={"User-Agent": UA}, timeout=30)
+    r = http_get(url, headers={"User-Agent": UA}, timeout=30)
     r.raise_for_status()
     soup = BeautifulSoup(r.text, "html.parser")
     posts = soup.select("div.tgme_widget_message[data-post]")
@@ -87,7 +118,7 @@ def fetch_html(src):
     """
     from urllib.parse import urljoin
 
-    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=30)
+    r = http_get(src["url"], headers={"User-Agent": UA}, timeout=30)
     r.raise_for_status()
     r.encoding = r.apparent_encoding or r.encoding
     soup = BeautifulSoup(r.text, "html.parser")
@@ -125,7 +156,7 @@ def fetch_next_json(src):
 
     Ищем объекты с полями titleRu / slug / shortTextRu / createdAt.
     """
-    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=60)
+    r = http_get(src["url"], headers={"User-Agent": UA}, timeout=60)
     r.raise_for_status()
     raw = r.content.decode("utf-8", "replace").replace('\\"', '"')
     rx = re.compile(r'"titleRu":"([^"]*)".{0,600}?"slug":"([^"]+)".{0,400}?"shortTextRu":"([^"]*)"', re.S)
@@ -151,7 +182,7 @@ def fetch_json_api(src):
     url — адрес API со списком новостей; ответ — список или объект с ключом results/items/data.
     link_template — адрес новости, {slug} и {id} подставляются из записи.
     """
-    r = requests.get(src["url"], params=src.get("params"), timeout=30,
+    r = http_get(src["url"], params=src.get("params"), timeout=30,
                      headers={"User-Agent": UA, "Accept": "application/json", "Accept-Language": "ru"})
     r.raise_for_status()
     try:
@@ -176,7 +207,7 @@ def fetch_json_api(src):
         title = text(row, "title_ru", "title", "name_ru", "name")
         if not title:
             raise RuntimeError(f"нет заголовка в записи: {json.dumps(row, ensure_ascii=False)[:300]}")
-        ts = row.get("published_at") or row.get("created_at") or row.get("date")
+        ts = row.get("published_at") or row.get("created_at") or row.get("created_date") or row.get("date")
         try:
             date = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
             date = date if date.tzinfo else date.replace(tzinfo=timezone.utc)
@@ -338,6 +369,8 @@ def main():
 
     report, added = [], 0
     for src in sources:
+        if bool(src.get("kz")) != bool(KZ_CACHE):  # каждый источник собирается только в своём месте
+            continue
         try:
             raw = list(FETCHERS[src["type"]](src))
         except SkipSource as e:
