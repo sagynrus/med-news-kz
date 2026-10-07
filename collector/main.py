@@ -1,0 +1,218 @@
+"""Собирает медицинские новости Казахстана, фильтрует по рубрикам и публикует RSS в docs/."""
+import hashlib
+import html
+import json
+import re
+import sys
+from datetime import datetime, timedelta, timezone
+from email.utils import format_datetime
+from pathlib import Path
+from xml.sax.saxutils import escape
+
+import feedparser
+import requests
+import yaml
+from bs4 import BeautifulSoup
+
+ROOT = Path(__file__).resolve().parent.parent
+CONFIG = ROOT / "config"
+STATE = ROOT / "data" / "items.json"
+OUT = ROOT / "docs"
+KEEP_DAYS = 30
+FEED_SIZE = 200
+UA = "Mozilla/5.0 (compatible; med-news-kz/1.0; +https://github.com/sagynrus/med-news-kz)"
+
+
+def compile_words(words):
+    """'анализатор*' -> regex по границе слова; * = любое окончание."""
+    parts = []
+    for w in words:
+        p = re.escape(w).replace(r"\*", r"\w*").replace(r"\ ", r"\s+")
+        parts.append(p)
+    return re.compile(r"(?<!\w)(?:" + "|".join(parts) + r")(?!\w)", re.IGNORECASE)
+
+
+def clean(text):
+    return re.sub(r"\s+", " ", BeautifulSoup(text or "", "html.parser").get_text(" ")).strip()
+
+
+def fetch_rss(src):
+    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=30)
+    r.raise_for_status()
+    feed = feedparser.parse(r.content)
+    for e in feed.entries:
+        ts = e.get("published_parsed") or e.get("updated_parsed")
+        date = datetime(*ts[:6], tzinfo=timezone.utc) if ts else datetime.now(timezone.utc)
+        yield {
+            "title": clean(e.get("title")),
+            "summary": clean(e.get("summary") or e.get("description"))[:600],
+            "link": e.get("link"),
+            "date": date,
+        }
+
+
+def fetch_telegram(src):
+    url = f"https://t.me/s/{src['channel']}"
+    r = requests.get(url, headers={"User-Agent": UA}, timeout=30)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    posts = soup.select("div.tgme_widget_message[data-post]")
+    if not posts:
+        raise RuntimeError("нет открытой ленты постов")
+    for post in posts:
+        body = post.select_one(".tgme_widget_message_text")
+        if not body:
+            continue
+        text = clean(str(body))
+        t = post.select_one("time[datetime]")
+        date = datetime.fromisoformat(t["datetime"]) if t else datetime.now(timezone.utc)
+        first = re.split(r"(?<=[.!?])\s|\n", body.get_text("\n").strip(), maxsplit=1)[0].strip()
+        title = first if 10 <= len(first) <= 200 else text[:140].rsplit(" ", 1)[0] + "…"
+        yield {
+            "title": title,
+            "summary": text[:600],
+            "link": f"https://t.me/{post['data-post']}",
+            "date": date.astimezone(timezone.utc),
+        }
+
+
+FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram}
+
+
+def norm_title(t):
+    return re.sub(r"[^\w]+", " ", t.lower()).strip()[:120]
+
+
+def classify(item, src, kw):
+    text = f"{item['title']} {item['summary']}"
+    if kw["exclude"].search(item["title"]):
+        return []
+    if not src.get("medical") and not kw["context"].search(text):
+        return []
+    rubrics = [key for key, rx in kw["rubrics"].items() if rx.search(text)]
+    if not rubrics and src.get("default_rubric"):
+        rubrics = [src["default_rubric"]]
+    return rubrics
+
+
+def rss_xml(title, desc, items, self_url):
+    now = format_datetime(datetime.now(timezone.utc))
+    out = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>',
+        f"<title>{escape(title)}</title>",
+        "<link>https://github.com/sagynrus/med-news-kz</link>",
+        f"<description>{escape(desc)}</description>",
+        "<language>ru</language>",
+        f"<lastBuildDate>{now}</lastBuildDate>",
+        f'<atom:link href="{escape(self_url)}" rel="self" type="application/rss+xml"/>',
+    ]
+    for it in items:
+        cats = "".join(f"<category>{escape(c)}</category>" for c in it["rubric_titles"])
+        desc_html = f"<p><b>{escape(it['source'])}</b> · {escape(', '.join(it['rubric_titles']))}</p><p>{escape(it['summary'])}</p>"
+        out.append(
+            "<item>"
+            f"<title>{escape(it['title'])}</title>"
+            f"<link>{escape(it['link'])}</link>"
+            f'<guid isPermaLink="false">{it["id"]}</guid>'
+            f"<pubDate>{format_datetime(datetime.fromisoformat(it['date']))}</pubDate>"
+            f"<source url=\"{escape(it['link'])}\">{escape(it['source'])}</source>"
+            f"{cats}"
+            f"<description>{escape(desc_html)}</description>"
+            "</item>"
+        )
+    out.append("</channel></rss>")
+    return "\n".join(out)
+
+
+def index_html(rubrics, items, base):
+    links = "".join(
+        f'<li><a href="{key}.xml">{html.escape(r["title"])}</a></li>' for key, r in rubrics.items()
+    )
+    rows = "".join(
+        f'<li><small>{it["date"][:10]} · {html.escape(it["source"])} · {html.escape(", ".join(it["rubric_titles"]))}</small><br>'
+        f'<a href="{html.escape(it["link"])}">{html.escape(it["title"])}</a></li>'
+        for it in items[:100]
+    )
+    return f"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Медновости РК</title>
+<link rel="alternate" type="application/rss+xml" title="Медновости РК" href="feed.xml">
+<style>body{{font:16px/1.5 system-ui,sans-serif;max-width:860px;margin:0 auto;padding:16px;color:#1b1b1b;background:#fff}}
+li{{margin:.6em 0}}small{{color:#666}}a{{color:#0b57d0}}</style></head><body>
+<h1>Медновости РК</h1><p>Обновлено: {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC</p>
+<h2>RSS-ленты</h2><ul><li><a href="feed.xml"><b>Все рубрики</b></a></li>{links}</ul>
+<h2>Последние новости</h2><ul>{rows}</ul></body></html>"""
+
+
+def main():
+    sources = yaml.safe_load((CONFIG / "sources.yaml").read_text(encoding="utf-8"))["sources"]
+    kwc = yaml.safe_load((CONFIG / "keywords.yaml").read_text(encoding="utf-8"))
+    kw = {
+        "context": compile_words(kwc["medical_context"]),
+        "exclude": compile_words(kwc["exclude"]),
+        "rubrics": {k: compile_words(v["words"]) for k, v in kwc["rubrics"].items()},
+    }
+    titles = {k: v["title"] for k, v in kwc["rubrics"].items()}
+
+    state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else []
+    seen_links = {it["link"] for it in state}
+    seen_titles = {norm_title(it["title"]) for it in state}
+    cutoff = datetime.now(timezone.utc) - timedelta(days=KEEP_DAYS)
+
+    report, added = [], 0
+    for src in sources:
+        try:
+            raw = list(FETCHERS[src["type"]](src))
+        except Exception as e:  # noqa: BLE001 — один сломанный источник не должен останавливать ленту
+            report.append(f"ОШИБКА  {src['name']}: {e}")
+            continue
+        kept = 0
+        for item in raw:
+            if not item["link"] or item["date"] < cutoff:
+                continue
+            nt = norm_title(item["title"])
+            if item["link"] in seen_links or nt in seen_titles:
+                continue
+            rubrics = classify(item, src, kw)
+            if not rubrics:
+                continue
+            seen_links.add(item["link"])
+            seen_titles.add(nt)
+            state.append({
+                "id": hashlib.sha1(item["link"].encode()).hexdigest()[:16],
+                "title": item["title"],
+                "summary": item["summary"],
+                "link": item["link"],
+                "date": item["date"].isoformat(),
+                "source": src["name"],
+                "rubrics": rubrics,
+                "rubric_titles": [titles[r] for r in rubrics],
+            })
+            kept += 1
+        added += kept
+        report.append(f"ok      {src['name']}: получено {len(raw)}, отобрано {kept}")
+
+    state = [it for it in state if datetime.fromisoformat(it["date"]) >= cutoff]
+    state.sort(key=lambda it: it["date"], reverse=True)
+    STATE.parent.mkdir(exist_ok=True)
+    STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    base = "https://sagynrus.github.io/med-news-kz/"
+    OUT.mkdir(exist_ok=True)
+    (OUT / "feed.xml").write_text(
+        rss_xml("Медновости РК: все рубрики", "Медицина, оборудование, закупки и приказы МЗ РК",
+                state[:FEED_SIZE], base + "feed.xml"), encoding="utf-8")
+    for key, title in titles.items():
+        items = [it for it in state if key in it["rubrics"]][:FEED_SIZE]
+        (OUT / f"{key}.xml").write_text(
+            rss_xml(f"Медновости РК: {title}", title, items, base + f"{key}.xml"), encoding="utf-8")
+    (OUT / "index.html").write_text(index_html(kwc["rubrics"], state, base), encoding="utf-8")
+
+    print("\n".join(report))
+    print(f"Новых: {added}, всего в базе: {len(state)}")
+    if all(line.startswith("ОШИБКА") for line in report):
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

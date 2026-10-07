@@ -1,0 +1,22 @@
+# Источники ленты.
+# type: rss | telegram
+# medical: true — профильный источник, новости не требуют медицинского контекста
+# default_rubric — рубрика, если ни одно ключевое слово не совпало (иначе новость пропускается)
+sources:
+  # Госорганы и закуп
+  - {name: "Минздрав РК", type: telegram, channel: DenMinPR, medical: true, default_rubric: law}
+  - {name: "СК-Фармация", type: telegram, channel: skpharmacy_kz, medical: true, default_rubric: supply}
+
+  # Отраслевые
+  - {name: "PharmNews.kz", type: telegram, channel: pharmnewskz, medical: true}
+  - {name: "ФармОбоз (PharmReviews)", type: telegram, channel: pharmreviews, medical: true}
+
+  # Деловые и общие СМИ
+  - {name: "Tengrinews", type: rss, url: "https://tengrinews.kz/news.rss"}
+  - {name: "NUR.KZ", type: rss, url: "https://www.nur.kz/rss/all.rss"}
+  - {name: "Курсив", type: rss, url: "https://kz.kursiv.media/feed/"}
+  - {name: "Inbusiness.kz", type: rss, url: "https://inbusiness.kz/ru/rss"}
+  - {name: "Zakon.kz", type: telegram, channel: zakonkz}
+  - {name: "Kapital.kz", type: telegram, channel: kapitalkz}
+  - {name: "Informburo.kz", type: telegram, channel: informburo_kz}
+  - {name: "Vlast.kz", type: telegram, channel: vlastkz}
