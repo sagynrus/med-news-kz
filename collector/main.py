@@ -145,15 +145,44 @@ def fetch_next_json(src):
     return items[: src.get("limit", 15)]
 
 
-def fetch_probe_js(src):  # ПРОБА (временно)
-    page = requests.get(src["url"], headers={"User-Agent": UA}, timeout=30).text
-    js_path = re.search(r'src="(/assets/[^"]+\.js)"', page).group(1)
-    base = re.match(r"https?://[^/]+", src["url"]).group(0)
-    js = requests.get(base + js_path, headers={"User-Agent": UA}, timeout=30).text
-    urls = sorted(set(re.findall(r"https?://[\w.-]+(?:/[\w./-]*)?", js)))
-    apis = sorted(set(re.findall(r"[\"'`](/?(?:api|v\d)[\w./${}-]*)", js)))
-    news = sorted(set(m[:120] for m in re.findall(r".{60}news.{60}", js)))[:25]
-    raise RuntimeError(f"JS {len(js)} симв.; URL: {urls[:60]}; API: {apis[:80]}; NEWS: {news}")
+def fetch_json_api(src):
+    """Сайт-приложение, которое берёт новости из своего JSON API (например, ndda.kz).
+
+    url — адрес API со списком новостей; ответ — список или объект с ключом results/items/data.
+    link_template — адрес новости, {slug} и {id} подставляются из записи.
+    """
+    r = requests.get(src["url"], params=src.get("params"), timeout=30,
+                     headers={"User-Agent": UA, "Accept": "application/json", "Accept-Language": "ru"})
+    r.raise_for_status()
+    data = r.json()
+    rows = data if isinstance(data, list) else next(
+        (v for k in ("results", "items", "data", "content") if isinstance(v := data.get(k), list)), None)
+    if not rows:
+        raise RuntimeError(f"не понял ответ API: {r.text[:300]}")
+
+    def text(row, *keys):
+        for k in keys:
+            v = row.get(k)
+            if isinstance(v, dict):  # {"ru": ..., "kk": ...}
+                v = v.get("ru") or next(iter(v.values()), None)
+            if v:
+                return clean(str(v))
+        return ""
+
+    for row in rows[: src.get("limit", 20)]:
+        title = text(row, "title_ru", "title", "name_ru", "name")
+        if not title:
+            raise RuntimeError(f"нет заголовка в записи: {json.dumps(row, ensure_ascii=False)[:300]}")
+        ts = row.get("published_at") or row.get("created_at") or row.get("date")
+        try:
+            date = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+            date = date if date.tzinfo else date.replace(tzinfo=timezone.utc)
+        except ValueError:
+            date = datetime.now(timezone.utc)
+        summary = text(row, "short_description_ru", "short_description", "description_ru", "description",
+                       "content_ru", "content") or title
+        yield {"title": title, "summary": summary[:600], "date": date.astimezone(timezone.utc),
+               "link": src["link_template"].format(slug=row.get("slug", ""), id=row.get("id", ""))}
 
 
 class SkipSource(Exception):
@@ -194,7 +223,7 @@ def fetch_instagram(src):
 
 
 FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html,
-            "next_json": fetch_next_json, "instagram": fetch_instagram, "probe_js": fetch_probe_js}
+            "next_json": fetch_next_json, "instagram": fetch_instagram, "json_api": fetch_json_api}
 
 
 def norm_title(t):
