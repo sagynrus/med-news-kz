@@ -33,9 +33,7 @@ jobs:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
       - name: Сохранить ленту
         if: github.event_name != 'pull_request'
-        run: |
-          git config user.name "med-news-bot"
-          git config user.email "med-news-bot@users.noreply.github.com"
-          git add data docs
-          git diff --cached --quiet || git commit -m "Обновление ленты $(date -u +'%Y-%m-%d %H:%M')"
-          git push
+        run: collector/save.sh "Обновление ленты"
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
