@@ -113,7 +113,7 @@ def fetch_html(src):
         sample = [a["href"] for a in soup.find_all("a", href=True)][:40]
         raise RuntimeError(
             f"на странице не найдено ссылок на новости (HTTP {r.status_code}, {len(r.text)} симв., "
-            f"ссылки на странице: {sample})"
+            f"ссылки на странице: {sample}" + ("" if sample else f", текст: {r.text[:500]!r}") + ")"
         )
     now = datetime.now(timezone.utc)
     for link, title in found[: src.get("limit", 15)]:
