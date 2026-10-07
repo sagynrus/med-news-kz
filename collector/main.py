@@ -154,7 +154,10 @@ def fetch_json_api(src):
     r = requests.get(src["url"], params=src.get("params"), timeout=30,
                      headers={"User-Agent": UA, "Accept": "application/json", "Accept-Language": "ru"})
     r.raise_for_status()
-    data = r.json()
+    try:
+        data = r.json()
+    except ValueError:
+        raise RuntimeError(f"ответ не JSON: {r.text[:300]!r}")
     rows = data if isinstance(data, list) else next(
         (v for k in ("results", "items", "data", "content") if isinstance(v := data.get(k), list)), None)
     if not rows:

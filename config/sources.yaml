@@ -31,5 +31,6 @@ sources:
   - {name: "Kapital.kz", type: telegram, channel: kapitalkz}
   - {name: "Informburo.kz", type: telegram, channel: informburo_kz}
   - {name: "Vlast.kz", type: telegram, channel: vlastkz}
-  - {name: "ПРОБА msqory", type: html, url: "https://msqory.kz/ru/press-tsentr/news/", link_pattern: "zzzz"}
-  - {name: "ПРОБА govkz", type: html, url: "https://www.gov.kz/memleket/entities/dsm/press/news/1?lang=ru", link_pattern: "zzzz"}
+  - {name: "ПРОБА govkz a", type: json_api, url: "https://www.gov.kz/api/v1/public/content-manager/news?sort-by=created_date:DESC&projects=eq:dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru"}
+  - {name: "ПРОБА govkz b", type: json_api, url: "https://www.gov.kz/api/v1/public/content-manager/news?projects=eq:dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru"}
+  - {name: "ПРОБА govkz c", type: json_api, url: "https://www.gov.kz/api/v1/public/content-manager/news?project=dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru"}
