@@ -376,7 +376,7 @@ def main():
             print("  js:", sorted(set(re.findall(r"""[\w./-]+\.js\b""", t)))[:30])
             print("  api:", sorted(set(re.findall(r"""/api/[\w./:?=&-]+""", t)))[:60])
             print("  ссылки:", sorted(set(re.findall(r"""href=["']([^"']+)""", t)))[:80])
-            for w in ("content-manager/news", "projects", "/rss", "baseURL", "api/v"):
+            for w in ("content-manager/news", ".get(`", '.get("', "fetch(", "/api"):
                 for m in list(re.finditer(re.escape(w), t))[:4]:
                     print("  около", w, ":", repr(t[max(0, m.start() - 250): m.end() + 250]))
     for src in sources:

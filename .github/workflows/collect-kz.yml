@@ -38,7 +38,13 @@ jobs:
             $url = $Matches[1]
             $file = "$i.bin"
             $i++
-            $code = & curl.exe -sS -L --max-time 60 -A $ua -H "Accept-Language: ru" -o "$dir/$file" -w '%{http_code}' $url
+            $jar = "$dir/cookies.txt"
+            if (Test-Path $jar) { Remove-Item $jar }
+            # ticket: URL the site calls first to get a cookie (gov.kz)
+            if ($m.Line -match 'ticket:\s*"([^"]+)"') {
+              & curl.exe -sS -L --max-time 60 -A $ua -c $jar -X POST -H "Content-Type: application/json" -o NUL $Matches[1]
+            }
+            $code = & curl.exe -sS -L --max-time 60 -A $ua -b $jar -c $jar -H "Accept-Language: ru" -o "$dir/$file" -w '%{http_code}' $url
             if ($LASTEXITCODE -eq 0) {
               $lines += "$file`t$code`t$url"
               Write-Host "ok $code $url"
@@ -46,6 +52,7 @@ jobs:
               Write-Host "ERROR curl $LASTEXITCODE $url"
             }
           }
+          if (Test-Path "$dir/cookies.txt") { Remove-Item "$dir/cookies.txt" }
           [IO.File]::WriteAllLines("$PWD/$dir/manifest.tsv", [string[]]$lines)
       - uses: actions/upload-artifact@v4
         with:
