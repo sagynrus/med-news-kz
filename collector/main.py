@@ -145,39 +145,6 @@ def fetch_next_json(src):
     return items[: src.get("limit", 15)]
 
 
-def fetch_govkz(src):
-    """Новости госоргана на gov.kz (сайт-приложение, данные берём из его публичного API).
-
-    project — код ведомства в адресе gov.kz/memleket/entities/<project>, например dsm (Минздрав).
-    """
-    project = src["project"]
-    r = requests.get("https://www.gov.kz/api/v1/public/content-manager/news",
-                     params={"projects": f"eq:{project}", "sort-by": "created_date:DESC",
-                             "page": 1, "size": src.get("limit", 20)},
-                     headers={"User-Agent": UA, "Accept": "application/json", "Accept-Language": "ru"},
-                     timeout=30)
-    r.raise_for_status()
-    data = r.json()
-    rows = data if isinstance(data, list) else next(
-        (v for k in ("content", "items", "data", "results") if isinstance(v := data.get(k), list)), None)
-    if not rows:
-        raise RuntimeError(f"не понял ответ API: {r.text[:300]}")
-    for row in rows:
-        title = clean(row.get("title") or row.get("title_ru") or "")
-        news_id = row.get("id")
-        ts = row.get("published_date") or row.get("created_date") or row.get("date")
-        if not title or news_id is None:
-            raise RuntimeError(f"нет title/id в записи: {json.dumps(row, ensure_ascii=False)[:300]}")
-        try:
-            date = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
-            date = date if date.tzinfo else date.replace(tzinfo=timezone.utc)
-        except ValueError:
-            date = datetime.now(timezone.utc)
-        summary = clean(row.get("short_description") or row.get("description") or row.get("body") or title)
-        yield {"title": title, "summary": summary[:600], "date": date.astimezone(timezone.utc),
-               "link": f"https://www.gov.kz/memleket/entities/{project}/press/news/details/{news_id}?lang=ru"}
-
-
 class SkipSource(Exception):
     """Источник не настроен: пропускаем без ошибки."""
 
@@ -216,7 +183,7 @@ def fetch_instagram(src):
 
 
 FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html,
-            "next_json": fetch_next_json, "instagram": fetch_instagram, "govkz": fetch_govkz}
+            "next_json": fetch_next_json, "instagram": fetch_instagram}
 
 
 def norm_title(t):

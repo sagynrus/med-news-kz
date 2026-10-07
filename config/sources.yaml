@@ -1,11 +1,11 @@
 # Источники ленты.
-# type: rss | telegram | instagram | html | govkz (новости ведомства с gov.kz, project — код из адреса) | next_json (сайт на Next.js, новости в JSON внутри страницы) (html: страница-список, link_pattern — регулярка для ссылок на новости)
+# type: rss | telegram | instagram | html | next_json (сайт на Next.js, новости в JSON внутри страницы) (html: страница-список, link_pattern — регулярка для ссылок на новости)
 # medical: true — профильный источник, новости не требуют медицинского контекста
 # default_rubric — рубрика, если ни одно ключевое слово не совпало (иначе новость пропускается)
 sources:
   # Госорганы и закуп
   - {name: "Минздрав РК", type: telegram, channel: DenMinPR, medical: true, default_rubric: law}
-  - {name: "Минздрав РК (gov.kz)", type: govkz, project: dsm, medical: true, default_rubric: law}
+  # gov.kz недоступен с серверов GitHub (соединение не устанавливается), пресс-релизы МЗ берём из Telegram выше
   - {name: "СК-Фармация", type: telegram, channel: skpharmacy_kz, medical: true, default_rubric: supply}
   - {name: "Turar Healthcare", type: next_json, url: "https://turar.kz/ru/news", link_template: "https://turar.kz/ru/news/{slug}", medical: true, default_rubric: build}
   - {name: "КазМедТех", type: html, url: "https://qazmedtech.kz/index.html", link_pattern: "qazmedtech\\.kz/RU_PR-\\d+\\.html$", medical: true, default_rubric: supply}
