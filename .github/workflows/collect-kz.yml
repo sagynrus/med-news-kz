@@ -1,0 +1,91 @@
+name: Сбор казахстанских сайтов
+
+# Сайты из config/sources.yaml с kz: true не открываются с серверов GitHub.
+# Их скачивает компьютер в Казахстане (self-hosted runner с меткой kz), а разбирает и
+# добавляет в ленту обычный сервер GitHub. Если компьютер выключен, сбор ждёт его включения.
+
+on:
+  schedule:
+    - cron: "47 */3 * * *"   # каждые 3 часа, между запусками основного сбора
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect-kz
+  cancel-in-progress: false
+
+jobs:
+  download:
+    runs-on: [self-hosted, kz]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: config
+      - name: Скачать страницы
+        shell: powershell
+        run: |
+          $dir = "kz"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          $ua = "Mozilla/5.0 (compatible; med-news-kz/1.0; +https://github.com/sagynrus/med-news-kz)"
+          $lines = @()
+          $i = 0
+          foreach ($m in Select-String -Path config/sources.yaml -Pattern '^\s*-\s*\{.*kz:\s*true' -Encoding UTF8) {
+            if ($m.Line -notmatch 'url:\s*"([^"]+)"') { continue }
+            $url = $Matches[1]
+            $file = "$i.bin"
+            $i++
+            $jar = "$dir/cookies.txt"
+            if (Test-Path $jar) { Remove-Item $jar }
+            # ticket: URL the site calls first to get a cookie (gov.kz)
+            if ($m.Line -match 'ticket:\s*"([^"]+)"') {
+              & curl.exe -sS -L --max-time 60 -A $ua -c $jar -X POST -H "Content-Type: application/json" -o NUL $Matches[1]
+            }
+            $code = & curl.exe -sS -L --max-time 60 -A $ua -b $jar -c $jar -H "Accept-Language: ru" -o "$dir/$file" -w '%{http_code}' $url
+            if ($LASTEXITCODE -eq 0) {
+              $lines += "$file`t$code`t$url"
+              Write-Host "ok $code $url"
+            } else {
+              Write-Host "ERROR curl $LASTEXITCODE $url"
+            }
+          }
+          if (Test-Path "$dir/cookies.txt") { Remove-Item "$dir/cookies.txt" }
+          [IO.File]::WriteAllLines("$PWD/$dir/manifest.tsv", [string[]]$lines)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kz-pages
+          path: kz
+          retention-days: 1
+
+  collect:
+    needs: download
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: collect   # не одновременно с основным сбором, оба пишут в ленту
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: kz-pages
+          path: kz
+      - run: python collector/main.py
+        env:
+          KZ_CACHE: kz
+      - name: Сохранить ленту
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "med-news-bot"
+          git config user.email "med-news-bot@users.noreply.github.com"
+          git add data docs
+          git diff --cached --quiet || git commit -m "Обновление ленты (сайты РК) $(date -u +'%Y-%m-%d %H:%M')"
+          git pull --rebase
+          git push

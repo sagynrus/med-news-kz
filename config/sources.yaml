@@ -1,10 +1,18 @@
 # Источники ленты.
-# type: rss | telegram | instagram | html | next_json (сайт на Next.js, новости в JSON внутри страницы) (html: страница-список, link_pattern — регулярка для ссылок на новости)
+# type: rss | telegram | instagram | html | json_api (сайт-приложение, новости из его API) | next_json (сайт на Next.js, новости в JSON внутри страницы) (html: страница-список, link_pattern — регулярка для ссылок на новости)
 # medical: true — профильный источник, новости не требуют медицинского контекста
 # default_rubric — рубрика, если ни одно ключевое слово не совпало (иначе новость пропускается)
+# kz: true — сайт недоступен с серверов GitHub, его скачивает компьютер в Казахстане (collect-kz.yml).
+#   Такой источник пишется одной строкой, адрес целиком в url (без params).
 sources:
   # Госорганы и закуп
   - {name: "Минздрав РК", type: telegram, channel: DenMinPR, medical: true, default_rubric: law}
+  # С серверов GitHub недоступны gov.kz и msqory.kz (ФСМС): их собирает компьютер в Казахстане.
+  # gov.kz отдаёт API только после запроса-билета (ticket). adilet.zan.kz: API только по ключу, RSS больше нет.
+  - {name: "Минздрав РК (gov.kz)", type: json_api, kz: true, url: "https://www.gov.kz/api/v1/public/content-manager/news?sort-by=created_date:DESC&projects=eq:dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru", ticket: "https://www.gov.kz/api/v1/public/_/c/k6", medical: true}
+  - {name: "ФСМС (msqory.kz)", type: html, kz: true, url: "https://msqory.kz/ru/press-tsentr/news/", link_pattern: "msqory\\.kz/ru/press-tsentr/news/detail\\.php\\?ELEMENT_ID=\\d+", medical: true}
+  # Telegram NDDA и ФСМС без открытой веб-ленты.
+  - {name: "NDDA (НЦЭЛС)", type: json_api, url: "https://www.ndda.kz/api/news/list/", link_template: "https://www.ndda.kz/news/{slug}", medical: true}
   - {name: "СК-Фармация", type: telegram, channel: skpharmacy_kz, medical: true, default_rubric: supply}
   - {name: "Turar Healthcare", type: next_json, url: "https://turar.kz/ru/news", link_template: "https://turar.kz/ru/news/{slug}", medical: true, default_rubric: build}
   - {name: "КазМедТех", type: html, url: "https://qazmedtech.kz/index.html", link_pattern: "qazmedtech\\.kz/RU_PR-\\d+\\.html$", medical: true, default_rubric: supply}
@@ -15,7 +23,9 @@ sources:
 
   # Отраслевые
   - {name: "PharmNews.kz", type: telegram, channel: pharmnewskz, medical: true}
+  - {name: "PharmNews.kz (сайт)", type: html, url: "https://pharmnews.kz/news", link_pattern: "pharmnews\\.kz/news/[^/?#]+_\\d+$", medical: true, limit: 20}
   - {name: "ФармОбоз (PharmReviews)", type: telegram, channel: pharmreviews, medical: true}
+  - {name: "НЦОЗ (hls.kz)", type: rss, url: "https://hls.kz/feed", medical: true}
 
   # Деловые и общие СМИ
   - {name: "Tengrinews", type: rss, url: "https://tengrinews.kz/news.rss"}

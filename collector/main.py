@@ -25,6 +25,37 @@ OUT = ROOT / "docs"
 KEEP_DAYS = 30
 FEED_SIZE = 200
 UA = "Mozilla/5.0 (compatible; med-news-kz/1.0; +https://github.com/sagynrus/med-news-kz)"
+# Сайты, недоступные с серверов GitHub (kz: true), скачивает компьютер в Казахстане (collect-kz.yml)
+# и кладёт сюда вместе с manifest.tsv: «файл, HTTP-код, адрес» в каждой строке.
+KZ_CACHE = os.environ.get("KZ_CACHE")
+
+
+def load_kz_cache():
+    if not KZ_CACHE:
+        return {}
+    cache = {}
+    for line in (Path(KZ_CACHE) / "manifest.tsv").read_text(encoding="utf-8-sig").splitlines():
+        if line.strip():
+            name, code, url = line.split("\t", 2)
+            cache[url.strip()] = (Path(KZ_CACHE) / name, int(code))
+    return cache
+
+
+KZ_FILES = load_kz_cache()
+
+
+def http_get(url, **kw):
+    """requests.get, а для сайтов из Казахстана — уже скачанная страница."""
+    if not KZ_CACHE:
+        return requests.get(url, **kw)
+    if url not in KZ_FILES:
+        raise RuntimeError("компьютер в Казахстане не скачал эту страницу")
+    path, code = KZ_FILES[url]
+    r = requests.models.Response()
+    r._content, r.status_code, r.url = path.read_bytes(), code, url
+    if code >= 400:
+        raise RuntimeError(f"HTTP {code}: {r.text[:300]!r}")
+    return r
 
 
 def compile_words(words):
@@ -41,7 +72,7 @@ def clean(text):
 
 
 def fetch_rss(src):
-    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=30)
+    r = http_get(src["url"], headers={"User-Agent": UA}, timeout=30)
     r.raise_for_status()
     feed = feedparser.parse(r.content)
     for e in feed.entries:
@@ -57,7 +88,7 @@ def fetch_rss(src):
 
 def fetch_telegram(src):
     url = f"https://t.me/s/{src['channel']}"
-    r = requests.get(url, headers={"User-Agent": UA}, timeout=30)
+    r = http_get(url, headers={"User-Agent": UA}, timeout=30)
     r.raise_for_status()
     soup = BeautifulSoup(r.text, "html.parser")
     posts = soup.select("div.tgme_widget_message[data-post]")
@@ -87,7 +118,7 @@ def fetch_html(src):
     """
     from urllib.parse import urljoin
 
-    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=30)
+    r = http_get(src["url"], headers={"User-Agent": UA}, timeout=30)
     r.raise_for_status()
     r.encoding = r.apparent_encoding or r.encoding
     soup = BeautifulSoup(r.text, "html.parser")
@@ -113,7 +144,7 @@ def fetch_html(src):
         sample = [a["href"] for a in soup.find_all("a", href=True)][:40]
         raise RuntimeError(
             f"на странице не найдено ссылок на новости (HTTP {r.status_code}, {len(r.text)} симв., "
-            f"ссылки на странице: {sample})"
+            f"ссылки на странице: {sample}" + ("" if sample else f", текст: {r.text[:500]!r}") + ")"
         )
     now = datetime.now(timezone.utc)
     for link, title in found[: src.get("limit", 15)]:
@@ -125,7 +156,7 @@ def fetch_next_json(src):
 
     Ищем объекты с полями titleRu / slug / shortTextRu / createdAt.
     """
-    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=60)
+    r = http_get(src["url"], headers={"User-Agent": UA}, timeout=60)
     r.raise_for_status()
     raw = r.content.decode("utf-8", "replace").replace('\\"', '"')
     rx = re.compile(r'"titleRu":"([^"]*)".{0,600}?"slug":"([^"]+)".{0,400}?"shortTextRu":"([^"]*)"', re.S)
@@ -143,6 +174,49 @@ def fetch_next_json(src):
     if not items:
         raise RuntimeError(f"новости в данных страницы не найдены ({len(raw)} симв.)")
     return items[: src.get("limit", 15)]
+
+
+def fetch_json_api(src):
+    """Сайт-приложение, которое берёт новости из своего JSON API (например, ndda.kz).
+
+    url — адрес API со списком новостей; ответ — список или объект с ключом results/items/data.
+    link_template — адрес новости, {slug} и {id} подставляются из записи.
+    """
+    r = http_get(src["url"], params=src.get("params"), timeout=30,
+                     headers={"User-Agent": UA, "Accept": "application/json", "Accept-Language": "ru"})
+    r.raise_for_status()
+    try:
+        data = r.json()
+    except ValueError:
+        raise RuntimeError(f"ответ не JSON: {r.text[:300]!r}")
+    rows = data if isinstance(data, list) else next(
+        (v for k in ("results", "items", "data", "content") if isinstance(v := data.get(k), list)), None)
+    if not rows:
+        raise RuntimeError(f"не понял ответ API: {r.text[:300]}")
+
+    def text(row, *keys):
+        for k in keys:
+            v = row.get(k)
+            if isinstance(v, dict):  # {"ru": ..., "kk": ...}
+                v = v.get("ru") or next(iter(v.values()), None)
+            if v:
+                return clean(str(v))
+        return ""
+
+    for row in rows[: src.get("limit", 20)]:
+        title = text(row, "title_ru", "title", "name_ru", "name")
+        if not title:
+            raise RuntimeError(f"нет заголовка в записи: {json.dumps(row, ensure_ascii=False)[:300]}")
+        ts = row.get("published_at") or row.get("created_at") or row.get("created_date") or row.get("date")
+        try:
+            date = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+            date = date if date.tzinfo else date.replace(tzinfo=timezone.utc)
+        except ValueError:
+            date = datetime.now(timezone.utc)
+        summary = text(row, "short_text_ru", "short_description_ru", "short_description", "description_ru", "description",
+                       "content_ru", "content", "body") or title
+        yield {"title": title, "summary": summary[:600], "date": date.astimezone(timezone.utc),
+               "link": src["link_template"].format(slug=row.get("slug", ""), id=row.get("id", ""))}
 
 
 class SkipSource(Exception):
@@ -183,11 +257,33 @@ def fetch_instagram(src):
 
 
 FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html,
-            "next_json": fetch_next_json, "instagram": fetch_instagram}
+            "next_json": fetch_next_json, "instagram": fetch_instagram, "json_api": fetch_json_api}
 
 
 def norm_title(t):
     return re.sub(r"[^\w]+", " ", t.lower()).strip()[:120]
+
+
+def title_words(t):
+    """Значимые слова заголовка; первые 6 букв, чтобы «закупки» и «закупок» совпадали."""
+    return frozenset(w[:6] for w in re.findall(r"\w+", t.lower()) if len(w) >= 4 and not w.isdigit())
+
+
+def is_similar(words, seen):
+    """Та же новость другими словами: заголовки совпадают на 80% слов,
+    или короткий заголовок (от 5 слов) почти целиком (85%) входит в длинный, как при обрезке."""
+    if len(words) < 4:
+        return False
+    for other in seen:
+        if len(other) < 4:
+            continue
+        common = len(words & other)
+        if common / len(words | other) >= 0.8:
+            return True
+        shorter = min(len(words), len(other))
+        if shorter >= 5 and common / shorter >= 0.85:
+            return True
+    return False
 
 
 def classify(item, src, kw):
@@ -268,10 +364,13 @@ def main():
     state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else []
     seen_links = {it["link"] for it in state}
     seen_titles = {norm_title(it["title"]) for it in state}
+    seen_words = [title_words(it["title"]) for it in state]
     cutoff = datetime.now(timezone.utc) - timedelta(days=KEEP_DAYS)
 
     report, added = [], 0
     for src in sources:
+        if bool(src.get("kz")) != bool(KZ_CACHE):  # каждый источник собирается только в своём месте
+            continue
         try:
             raw = list(FETCHERS[src["type"]](src))
         except SkipSource as e:
@@ -285,13 +384,15 @@ def main():
             if not item["link"] or item["date"] < cutoff:
                 continue
             nt = norm_title(item["title"])
-            if item["link"] in seen_links or nt in seen_titles:
+            words = title_words(item["title"])
+            if item["link"] in seen_links or nt in seen_titles or is_similar(words, seen_words):
                 continue
             rubrics = classify(item, src, kw)
             if not rubrics:
                 continue
             seen_links.add(item["link"])
             seen_titles.add(nt)
+            seen_words.append(words)
             state.append({
                 "id": hashlib.sha1(item["link"].encode()).hexdigest()[:16],
                 "title": item["title"],
