@@ -190,6 +190,28 @@ def norm_title(t):
     return re.sub(r"[^\w]+", " ", t.lower()).strip()[:120]
 
 
+def title_words(t):
+    """Значимые слова заголовка; первые 6 букв, чтобы «закупки» и «закупок» совпадали."""
+    return frozenset(w[:6] for w in re.findall(r"\w+", t.lower()) if len(w) >= 4 and not w.isdigit())
+
+
+def is_similar(words, seen):
+    """Та же новость другими словами: заголовки совпадают на 80% слов,
+    или короткий заголовок (от 5 слов) почти целиком (85%) входит в длинный, как при обрезке."""
+    if len(words) < 4:
+        return False
+    for other in seen:
+        if len(other) < 4:
+            continue
+        common = len(words & other)
+        if common / len(words | other) >= 0.8:
+            return True
+        shorter = min(len(words), len(other))
+        if shorter >= 5 and common / shorter >= 0.85:
+            return True
+    return False
+
+
 def classify(item, src, kw):
     text = f"{item['title']} {item['summary']}"
     if kw["exclude"].search(item["title"]):
@@ -268,6 +290,7 @@ def main():
     state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else []
     seen_links = {it["link"] for it in state}
     seen_titles = {norm_title(it["title"]) for it in state}
+    seen_words = [title_words(it["title"]) for it in state]
     cutoff = datetime.now(timezone.utc) - timedelta(days=KEEP_DAYS)
 
     report, added = [], 0
@@ -285,13 +308,15 @@ def main():
             if not item["link"] or item["date"] < cutoff:
                 continue
             nt = norm_title(item["title"])
-            if item["link"] in seen_links or nt in seen_titles:
+            words = title_words(item["title"])
+            if item["link"] in seen_links or nt in seen_titles or is_similar(words, seen_words):
                 continue
             rubrics = classify(item, src, kw)
             if not rubrics:
                 continue
             seen_links.add(item["link"])
             seen_titles.add(nt)
+            seen_words.append(words)
             state.append({
                 "id": hashlib.sha1(item["link"].encode()).hexdigest()[:16],
                 "title": item["title"],
