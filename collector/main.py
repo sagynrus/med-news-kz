@@ -214,7 +214,7 @@ def fetch_json_api(src):
         except ValueError:
             date = datetime.now(timezone.utc)
         summary = text(row, "short_text_ru", "short_description_ru", "short_description", "description_ru", "description",
-                       "content_ru", "content") or title
+                       "content_ru", "content", "body") or title
         yield {"title": title, "summary": summary[:600], "date": date.astimezone(timezone.utc),
                "link": src["link_template"].format(slug=row.get("slug", ""), id=row.get("id", ""))}
 
@@ -373,6 +373,13 @@ def main():
             t = path.read_bytes().decode("utf-8", "replace")
             print("ПРОБА", code, len(t), url)
             print("  начало:", repr(t[:400]))
+            try:
+                d = json.loads(t)
+                print("  json-ключи:", list(d)[:20] if isinstance(d, dict) else f"список из {len(d)}")
+                row = d[0] if isinstance(d, list) else next((v[0] for v in d.values() if isinstance(v, list) and v), d)
+                print("  первая запись:", {k: str(v)[:120] for k, v in row.items()})
+            except Exception as e:  # noqa: BLE001
+                print("  не JSON:", e)
             print("  js:", sorted(set(re.findall(r"""[\w./-]+\.js\b""", t)))[:30])
             print("  api:", sorted(set(re.findall(r"""/api/[\w./:?=&-]+""", t)))[:60])
             print("  ссылки:", sorted(set(re.findall(r"""href=["']([^"']+)""", t)))[:80])

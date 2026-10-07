@@ -10,9 +10,7 @@ sources:
   # С серверов GitHub недоступны gov.kz, msqory.kz (ФСМС) и adilet.zan.kz: их собирает компьютер в Казахстане.
   - {name: "Минздрав РК (gov.kz)", type: json_api, kz: true, url: "https://www.gov.kz/api/v1/public/content-manager/news?sort-by=created_date:DESC&projects=eq:dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru", ticket: "https://www.gov.kz/api/v1/public/_/c/k6", medical: true}
   - {name: "ФСМС (msqory.kz)", type: html, kz: true, url: "https://msqory.kz/ru/press-tsentr/news/", link_pattern: "msqory\\.kz/ru/press-tsentr/news/detail\\.php\\?ELEMENT_ID=\\d+", medical: true}
-  - {name: "Әділет: новые документы", type: rss, kz: true, url: "https://adilet.zan.kz/rus/docs/rss"}
-  - {name: "ПРОБА govkz страница", type: html, kz: true, url: "https://adilet.zan.kz/assets/document-D8gjuSic.js", link_pattern: "zzzz"}
-  - {name: "ПРОБА adilet сайт", type: html, kz: true, url: "https://adilet.zan.kz/assets/HomePage-C2o2JI82.js", link_pattern: "zzzz"}
+  - {name: "Әділет: новые документы", type: json_api, kz: true, url: "https://adilet.zan.kz/api/documents?status=new&language=ru&page=1&page_size=50", link_template: "https://adilet.zan.kz/rus/docs/{id}"}
   # Telegram NDDA и ФСМС без открытой веб-ленты.
   - {name: "NDDA (НЦЭЛС)", type: json_api, url: "https://www.ndda.kz/api/news/list/", link_template: "https://www.ndda.kz/news/{slug}", medical: true}
   - {name: "СК-Фармация", type: telegram, channel: skpharmacy_kz, medical: true, default_rubric: supply}
