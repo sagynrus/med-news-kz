@@ -368,6 +368,14 @@ def main():
     cutoff = datetime.now(timezone.utc) - timedelta(days=KEEP_DAYS)
 
     report, added = [], 0
+    if KZ_CACHE:  # ПРОБА: что скачал компьютер в Казахстане
+        for url, (path, code) in KZ_FILES.items():
+            t = path.read_bytes().decode("utf-8", "replace")
+            print("ПРОБА", code, len(t), url)
+            print("  начало:", repr(t[:400]))
+            print("  js:", sorted(set(re.findall(r"""[\w./-]+\.js\b""", t)))[:30])
+            print("  api:", sorted(set(re.findall(r"""/api/[\w./:?=&-]+""", t)))[:60])
+            print("  ссылки:", sorted(set(re.findall(r"""href=["']([^"']+)""", t)))[:80])
     for src in sources:
         if bool(src.get("kz")) != bool(KZ_CACHE):  # каждый источник собирается только в своём месте
             continue
