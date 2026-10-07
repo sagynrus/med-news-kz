@@ -28,3 +28,14 @@ sources:
   - {name: "Kapital.kz", type: telegram, channel: kapitalkz}
   - {name: "Informburo.kz", type: telegram, channel: informburo_kz}
   - {name: "Vlast.kz", type: telegram, channel: vlastkz}
+
+  # ПРОБА (временно)
+  - {name: "ПРОБА NDDA tg", type: telegram, channel: ndda_kz, medical: true, default_rubric: devices}
+  - {name: "ПРОБА ФСМС tg", type: telegram, channel: fms_kz, medical: true, default_rubric: law}
+  - {name: "ПРОБА medelement", type: html, url: "https://medelement.com/", link_pattern: "zzzz"}
+  - {name: "ПРОБА medelement rss", type: rss, url: "https://medelement.com/rss"}
+  - {name: "ПРОБА medzdrav", type: html, url: "https://medzdrav.kz/", link_pattern: "zzzz"}
+  - {name: "ПРОБА ndda.kz", type: html, url: "https://www.ndda.kz/", link_pattern: "zzzz"}
+  - {name: "ПРОБА fms.kz", type: html, url: "https://fms.kz/", link_pattern: "zzzz"}
+  - {name: "ПРОБА goszakup", type: html, url: "https://goszakup.gov.kz/ru/news", link_pattern: "zzzz"}
+  - {name: "ПРОБА hls.kz", type: html, url: "https://hls.kz/", link_pattern: "zzzz"}
