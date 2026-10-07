@@ -99,6 +99,14 @@ def fetch_html(src):
         if not rx.search(link):
             continue
         text = clean(a.get_text(" ")) or clean(a.get("title"))
+        if len(text) < 15:  # «Подробнее» и картинки: берём текст карточки вокруг ссылки
+            block = a.parent
+            for _ in range(3):
+                if block is None or len(clean(block.get_text(" "))) >= 15:
+                    break
+                block = block.parent
+            text = clean(block.get_text(" "))[:200] if block is not None else text
+            text = re.sub(r"\s*(Подробнее|Читать далее|Толығырақ)\.?$", "", text, flags=re.I)
         if len(text) > len(titles.get(link, "")):
             titles[link] = text
     found = [(link, t) for link, t in titles.items() if len(t) >= 15]
@@ -111,6 +119,31 @@ def fetch_html(src):
     now = datetime.now(timezone.utc)
     for link, title in found[: src.get("limit", 15)]:
         yield {"title": title[:200], "summary": title, "link": link, "date": now}
+
+
+def fetch_next_json(src):
+    """Сайт на Next.js без ссылок в HTML: новости лежат JSON-ом внутри страницы.
+
+    Ищем объекты с полями titleRu / slug / shortTextRu / createdAt.
+    """
+    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=60)
+    r.raise_for_status()
+    raw = r.content.decode("utf-8", "replace").replace('\\"', '"')
+    rx = re.compile(r'"titleRu":"([^"]*)".{0,600}?"slug":"([^"]+)".{0,400}?"shortTextRu":"([^"]*)"', re.S)
+    seen, items = set(), []
+    for m in rx.finditer(raw):
+        slug = m.group(2)
+        if slug in seen:
+            continue
+        seen.add(slug)
+        d = re.search(r'"createdAt":"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)', raw[m.end():m.end() + 20000])
+        date = (datetime.strptime(d.group(1), "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+                if d else datetime.now(timezone.utc))
+        items.append({"title": clean(m.group(1)), "summary": clean(m.group(3))[:600],
+                      "link": src["link_template"].format(slug=slug), "date": date})
+    if not items:
+        raise RuntimeError(f"новости в данных страницы не найдены ({len(raw)} симв.)")
+    return items[: src.get("limit", 15)]
 
 
 class SkipSource(Exception):
@@ -150,7 +183,8 @@ def fetch_instagram(src):
         }
 
 
-FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html, "instagram": fetch_instagram}
+FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html,
+            "next_json": fetch_next_json, "instagram": fetch_instagram}
 
 
 def norm_title(t):
