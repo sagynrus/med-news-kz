@@ -5,7 +5,8 @@
 sources:
   # Госорганы и закуп
   - {name: "Минздрав РК", type: telegram, channel: DenMinPR, medical: true, default_rubric: law}
-  # gov.kz недоступен с серверов GitHub (соединение не устанавливается), пресс-релизы МЗ берём из Telegram выше
+  # Недоступны с серверов GitHub (проверено 2026-10-07): gov.kz и fms.kz (таймаут), adilet.zan.kz (заглушка без ссылок),
+  # ndda.kz (страница на JavaScript). Telegram NDDA и ФСМС без открытой веб-ленты. Пресс-релизы МЗ берём из Telegram выше.
   - {name: "СК-Фармация", type: telegram, channel: skpharmacy_kz, medical: true, default_rubric: supply}
   - {name: "Turar Healthcare", type: next_json, url: "https://turar.kz/ru/news", link_template: "https://turar.kz/ru/news/{slug}", medical: true, default_rubric: build}
   - {name: "КазМедТех", type: html, url: "https://qazmedtech.kz/index.html", link_pattern: "qazmedtech\\.kz/RU_PR-\\d+\\.html$", medical: true, default_rubric: supply}
@@ -18,6 +19,7 @@ sources:
   - {name: "PharmNews.kz", type: telegram, channel: pharmnewskz, medical: true}
   - {name: "PharmNews.kz (сайт)", type: html, url: "https://pharmnews.kz/news", link_pattern: "pharmnews\\.kz/news/[^/?#]+_\\d+$", medical: true, limit: 20}
   - {name: "ФармОбоз (PharmReviews)", type: telegram, channel: pharmreviews, medical: true}
+  - {name: "НЦОЗ (hls.kz)", type: rss, url: "https://hls.kz/feed", medical: true}
 
   # Деловые и общие СМИ
   - {name: "Tengrinews", type: rss, url: "https://tengrinews.kz/news.rss"}
@@ -28,7 +30,3 @@ sources:
   - {name: "Kapital.kz", type: telegram, channel: kapitalkz}
   - {name: "Informburo.kz", type: telegram, channel: informburo_kz}
   - {name: "Vlast.kz", type: telegram, channel: vlastkz}
-
-  # ПРОБА (временно)
-  - {name: "ПРОБА adilet page", type: html, url: "https://adilet.zan.kz/rus/docs/rss", link_pattern: "zzzz"}
-  - {name: "ПРОБА adilet main", type: html, url: "https://adilet.zan.kz/rus", link_pattern: "zzzz"}
