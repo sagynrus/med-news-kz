@@ -1,0 +1,16 @@
+name: inspect
+on: {push: {branches: [debug-inspect]}}
+jobs:
+  i:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          UA="Mozilla/5.0"
+          curl -sL -A "$UA" https://qazmedtech.kz/RU_News.html -o k.html
+          echo "=== KMT RU_PR links"; grep -o 'href="[^"]*PR[^"]*"' k.html | sort | uniq -c | head -40
+          echo "=== KMT context"; grep -n -B3 -A3 'RU_PR-2' k.html | head -40
+          curl -sL -A "$UA" https://turar.kz/ru/news -o t.html
+          echo "=== TURAR slugs"; grep -o 'cifrovoe-razvitie' t.html | wc -l
+          grep -o '.\{300\}cifrovoe-razvitie.\{300\}' t.html | head -3
+          echo "=== TURAR scripts"; grep -o '<script[^>]*>' t.html | head -20
+          curl -sL -A "$UA" "https://turar.kz/ru/news/cifrovoe-razvitie" -o a.html; echo "article size $(wc -c < a.html)"; grep -o '<title>[^<]*' a.html
