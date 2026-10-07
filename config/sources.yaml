@@ -30,12 +30,5 @@ sources:
   - {name: "Vlast.kz", type: telegram, channel: vlastkz}
 
   # ПРОБА (временно)
-  - {name: "ПРОБА adilet rss", type: rss, url: "https://adilet.zan.kz/rus/docs/rss"}
-  - {name: "ПРОБА medelement news", type: html, url: "https://medelement.com/news", link_pattern: "zzzz"}
-  - {name: "ПРОБА medelement tg", type: telegram, channel: medelementcom}
-  - {name: "ПРОБА medzdrav news", type: html, url: "https://medzdrav.kz/index.php/news", link_pattern: "zzzz"}
-  - {name: "ПРОБА hls feed", type: rss, url: "https://hls.kz/feed"}
-  - {name: "ПРОБА hls tg", type: telegram, channel: ncozmz}
-  - {name: "ПРОБА ndda ru", type: html, url: "https://www.ndda.kz/ru", link_pattern: "zzzz"}
-  - {name: "ПРОБА NDDA tg2", type: telegram, channel: nddakz}
-  - {name: "ПРОБА FMS tg2", type: telegram, channel: fmskz}
+  - {name: "ПРОБА adilet page", type: html, url: "https://adilet.zan.kz/rus/docs/rss", link_pattern: "zzzz"}
+  - {name: "ПРОБА adilet main", type: html, url: "https://adilet.zan.kz/rus", link_pattern: "zzzz"}
