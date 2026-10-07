@@ -23,7 +23,7 @@
 
 1. Откройте Graph API Explorer: developers.facebook.com/tools/explorer
 2. Справа выберите ваше приложение. Нажмите «Generate Access Token» и отметьте разрешения:
-   `instagram_basic`, `pages_show_list`, `pages_read_engagement`, `business_management`.
+   `instagram_basic`, `instagram_manage_insights`, `pages_show_list`, `pages_read_engagement`, `business_management`.
    Подтвердите доступ к вашей странице и Instagram-аккаунту.
 3. Сделайте токен долгоживущим: нажмите на значок «i» рядом с токеном → «Open in Access Token Tool» → «Extend Access Token».
    Скопируйте новый токен и вставьте его обратно в поле токена в Explorer.
