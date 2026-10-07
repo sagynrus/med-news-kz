@@ -1,6 +1,5 @@
 """Собирает медицинские новости Казахстана, фильтрует по рубрикам и публикует RSS в docs/."""
 import hashlib
-import html
 import json
 import os
 import re
@@ -233,23 +232,27 @@ def rss_xml(title, desc, items, self_url):
     return "\n".join(out)
 
 
-def index_html(rubrics, items, base):
-    links = "".join(
-        f'<li><a href="{key}.xml">{html.escape(r["title"])}</a></li>' for key, r in rubrics.items()
-    )
-    rows = "".join(
-        f'<li><small>{it["date"][:10]} · {html.escape(it["source"])} · {html.escape(", ".join(it["rubric_titles"]))}</small><br>'
-        f'<a href="{html.escape(it["link"])}">{html.escape(it["title"])}</a></li>'
-        for it in items[:100]
-    )
-    return f"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Медновости РК</title>
-<link rel="alternate" type="application/rss+xml" title="Медновости РК" href="feed.xml">
-<style>body{{font:16px/1.5 system-ui,sans-serif;max-width:860px;margin:0 auto;padding:16px;color:#1b1b1b;background:#fff}}
-li{{margin:.6em 0}}small{{color:#666}}a{{color:#0b57d0}}</style></head><body>
-<h1>Медновости РК</h1><p>Обновлено: {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC</p>
-<h2>RSS-ленты</h2><ul><li><a href="feed.xml"><b>Все рубрики</b></a></li>{links}</ul>
-<h2>Последние новости</h2><ul>{rows}</ul></body></html>"""
+def news_json(rubrics, items):
+    """Данные для страницы-просмотрщика: новости с оценкой важности.
+
+    Важность = вес самой важной рубрики + по баллу за каждое найденное ключевое слово (до 5,
+    разные формы одного слова считаются один раз) + балл за каждую дополнительную рубрику.
+    Веса рубрик: weight в config/keywords.yaml.
+    """
+    patterns = {w: compile_words([w]) for r in rubrics.values() for w in r["words"]}
+    out = []
+    for it in items:
+        text = f"{it['title']} {it['summary']}"
+        words = sorted({m.group(0).lower() for rx in patterns.values() if (m := rx.search(text))})
+        weights = [rubrics[r].get("weight", 1) for r in it["rubrics"] if r in rubrics] or [1]
+        score = max(weights) + min(len(words), 5) + len(weights) - 1
+        out.append({**{k: it[k] for k in ("id", "title", "summary", "link", "source", "rubrics", "date")},
+                    "score": score, "words": words})
+    return json.dumps({
+        "updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "rubrics": {k: {"title": r["title"], "weight": r.get("weight", 1)} for k, r in rubrics.items()},
+        "items": out,
+    }, ensure_ascii=False, separators=(",", ":"))
 
 
 def main():
@@ -317,7 +320,9 @@ def main():
         items = [it for it in state if key in it["rubrics"]][:FEED_SIZE]
         (OUT / f"{key}.xml").write_text(
             rss_xml(f"Медновости РК: {title}", title, items, base + f"{key}.xml"), encoding="utf-8")
-    (OUT / "index.html").write_text(index_html(kwc["rubrics"], state, base), encoding="utf-8")
+    (OUT / "news.json").write_text(news_json(kwc["rubrics"], state), encoding="utf-8")
+    (OUT / "index.html").write_text((ROOT / "collector" / "viewer.html").read_text(encoding="utf-8"),
+                                    encoding="utf-8")
 
     print("\n".join(report))
     print(f"Новых: {added}, всего в базе: {len(state)}")
