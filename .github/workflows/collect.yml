@@ -28,6 +28,9 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python collector/main.py
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
       - name: Сохранить ленту
         if: github.event_name != 'pull_request'
         run: |

@@ -2,6 +2,7 @@
 import hashlib
 import html
 import json
+import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
@@ -112,7 +113,44 @@ def fetch_html(src):
         yield {"title": title[:200], "summary": title, "link": link, "date": now}
 
 
-FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html}
+class SkipSource(Exception):
+    """Источник не настроен: пропускаем без ошибки."""
+
+
+def fetch_instagram(src):
+    """Посты публичного бизнес-аккаунта через Business Discovery (Instagram Graph API).
+
+    Нужны секреты IG_USER_ID (ваш бизнес-аккаунт) и IG_TOKEN (токен страницы Facebook).
+    """
+    user_id, token = os.environ.get("IG_USER_ID"), os.environ.get("IG_TOKEN")
+    if not user_id or not token:
+        raise SkipSource("не заданы секреты IG_USER_ID и IG_TOKEN")
+    version = os.environ.get("IG_API_VERSION", "v24.0")
+    fields = (f"business_discovery.username({src['username']})"
+              "{media.limit(15){caption,permalink,timestamp}}")
+    r = requests.get(f"https://graph.facebook.com/{version}/{user_id}",
+                     params={"fields": fields, "access_token": token}, timeout=30)
+    if r.status_code != 200:
+        try:
+            msg = r.json()["error"]["message"]
+        except (ValueError, KeyError):
+            msg = r.text[:200]
+        raise RuntimeError(f"HTTP {r.status_code}: {msg}")
+    for m in r.json()["business_discovery"]["media"]["data"]:
+        caption = clean(m.get("caption"))
+        if not caption:
+            continue
+        first = re.split(r"(?<=[.!?])\s|\n", (m.get("caption") or "").strip(), maxsplit=1)[0].strip()
+        title = first if 10 <= len(first) <= 200 else caption[:140].rsplit(" ", 1)[0] + "…"
+        yield {
+            "title": title,
+            "summary": caption[:600],
+            "link": m["permalink"],
+            "date": datetime.strptime(m["timestamp"], "%Y-%m-%dT%H:%M:%S%z").astimezone(timezone.utc),
+        }
+
+
+FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html, "instagram": fetch_instagram}
 
 
 def norm_title(t):
@@ -199,6 +237,9 @@ def main():
     for src in sources:
         try:
             raw = list(FETCHERS[src["type"]](src))
+        except SkipSource as e:
+            report.append(f"пропуск  {src['name']}: {e}")
+            continue
         except Exception as e:  # noqa: BLE001 — один сломанный источник не должен останавливать ленту
             report.append(f"ОШИБКА  {src['name']}: {e}")
             continue
@@ -246,7 +287,7 @@ def main():
 
     print("\n".join(report))
     print(f"Новых: {added}, всего в базе: {len(state)}")
-    if all(line.startswith("ОШИБКА") for line in report):
+    if not any(line.startswith("ok") for line in report):
         sys.exit(1)
 
 
