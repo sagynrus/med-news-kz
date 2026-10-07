@@ -158,7 +158,7 @@ def fetch_instagram(src):
     user_id, token = os.environ.get("IG_USER_ID"), os.environ.get("IG_TOKEN")
     if not user_id or not token:
         raise SkipSource("не заданы секреты IG_USER_ID и IG_TOKEN")
-    version = os.environ.get("IG_API_VERSION", "v24.0")
+    version = os.environ.get("IG_API_VERSION", "v26.0")
     fields = (f"business_discovery.username({src['username']})"
               "{media.limit(15){caption,permalink,timestamp}}")
     r = requests.get(f"https://graph.facebook.com/{version}/{user_id}",
