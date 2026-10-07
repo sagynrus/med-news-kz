@@ -169,6 +169,7 @@ def fetch_json_api(src):
                 return clean(str(v))
         return ""
 
+    print("ПРОБА keys:", sorted(rows[0].keys()), json.dumps(rows[0], ensure_ascii=False)[:700])  # ПРОБА
     for row in rows[: src.get("limit", 20)]:
         title = text(row, "title_ru", "title", "name_ru", "name")
         if not title:
@@ -181,6 +182,7 @@ def fetch_json_api(src):
             date = datetime.now(timezone.utc)
         summary = text(row, "short_description_ru", "short_description", "description_ru", "description",
                        "content_ru", "content") or title
+        print("ПРОБА item:", date.isoformat(), title[:90], summary[:80])  # ПРОБА
         yield {"title": title, "summary": summary[:600], "date": date.astimezone(timezone.utc),
                "link": src["link_template"].format(slug=row.get("slug", ""), id=row.get("id", ""))}
 
