@@ -5,7 +5,7 @@
 sources:
   # Госорганы и закуп
   - {name: "Минздрав РК", type: telegram, channel: DenMinPR, medical: true, default_rubric: law}
-  # Недоступны с серверов GitHub (проверено 2026-10-07): gov.kz и fms.kz (таймаут), adilet.zan.kz (заглушка без ссылок).
+  # Недоступны с серверов GitHub (проверено 2026-10-07): gov.kz (чаще таймаут, сайт и API на JavaScript), fms.kz и msqory.kz (таймаут), adilet.zan.kz (заглушка без ссылок).
   # Telegram NDDA и ФСМС без открытой веб-ленты. Пресс-релизы МЗ берём из Telegram выше.
   - {name: "NDDA (НЦЭЛС)", type: json_api, url: "https://www.ndda.kz/api/news/list/", link_template: "https://www.ndda.kz/news/{slug}", medical: true}
   - {name: "СК-Фармация", type: telegram, channel: skpharmacy_kz, medical: true, default_rubric: supply}
@@ -31,6 +31,3 @@ sources:
   - {name: "Kapital.kz", type: telegram, channel: kapitalkz}
   - {name: "Informburo.kz", type: telegram, channel: informburo_kz}
   - {name: "Vlast.kz", type: telegram, channel: vlastkz}
-  - {name: "ПРОБА govkz a", type: json_api, url: "https://www.gov.kz/api/v1/public/content-manager/news?sort-by=created_date:DESC&projects=eq:dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru"}
-  - {name: "ПРОБА govkz b", type: json_api, url: "https://www.gov.kz/api/v1/public/content-manager/news?projects=eq:dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru"}
-  - {name: "ПРОБА govkz c", type: json_api, url: "https://www.gov.kz/api/v1/public/content-manager/news?project=dsm&page=1&size=20", link_template: "https://www.gov.kz/memleket/entities/dsm/press/news/details/{id}?lang=ru"}
