@@ -9,10 +9,14 @@ from email.utils import format_datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+import warnings
+
 import feedparser
 import requests
 import yaml
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config"
@@ -76,7 +80,35 @@ def fetch_telegram(src):
         }
 
 
-FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram}
+def fetch_html(src):
+    """Страница-список новостей без RSS: берём ссылки, подходящие под link_pattern.
+
+    Дату публикации со страницы не разбираем: ставим время, когда новость впервые увидели.
+    """
+    from urllib.parse import urljoin
+
+    r = requests.get(src["url"], headers={"User-Agent": UA}, timeout=30)
+    r.raise_for_status()
+    r.encoding = r.apparent_encoding or r.encoding
+    soup = BeautifulSoup(r.text, "html.parser")
+    rx = re.compile(src["link_pattern"])
+    titles = {}
+    for a in soup.find_all("a", href=True):
+        link = urljoin(src["url"], a["href"]).split("#")[0]
+        if not rx.search(link):
+            continue
+        text = clean(a.get_text(" ")) or clean(a.get("title"))
+        if len(text) > len(titles.get(link, "")):
+            titles[link] = text
+    found = [(link, t) for link, t in titles.items() if len(t) >= 15]
+    if not found:
+        raise RuntimeError("на странице не найдено ссылок на новости")
+    now = datetime.now(timezone.utc)
+    for link, title in found[: src.get("limit", 15)]:
+        yield {"title": title[:200], "summary": title, "link": link, "date": now}
+
+
+FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html}
 
 
 def norm_title(t):
