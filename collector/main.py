@@ -145,6 +145,17 @@ def fetch_next_json(src):
     return items[: src.get("limit", 15)]
 
 
+def fetch_probe_js(src):  # ПРОБА (временно)
+    page = requests.get(src["url"], headers={"User-Agent": UA}, timeout=30).text
+    js_path = re.search(r'src="(/assets/[^"]+\.js)"', page).group(1)
+    base = re.match(r"https?://[^/]+", src["url"]).group(0)
+    js = requests.get(base + js_path, headers={"User-Agent": UA}, timeout=30).text
+    urls = sorted(set(re.findall(r"https?://[\w.-]+(?:/[\w./-]*)?", js)))
+    apis = sorted(set(re.findall(r"[\"'`](/?(?:api|v\d)[\w./${}-]*)", js)))
+    news = sorted(set(m[:120] for m in re.findall(r".{60}news.{60}", js)))[:25]
+    raise RuntimeError(f"JS {len(js)} симв.; URL: {urls[:60]}; API: {apis[:80]}; NEWS: {news}")
+
+
 class SkipSource(Exception):
     """Источник не настроен: пропускаем без ошибки."""
 
@@ -183,7 +194,7 @@ def fetch_instagram(src):
 
 
 FETCHERS = {"rss": fetch_rss, "telegram": fetch_telegram, "html": fetch_html,
-            "next_json": fetch_next_json, "instagram": fetch_instagram}
+            "next_json": fetch_next_json, "instagram": fetch_instagram, "probe_js": fetch_probe_js}
 
 
 def norm_title(t):

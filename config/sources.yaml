@@ -32,4 +32,4 @@ sources:
   - {name: "Vlast.kz", type: telegram, channel: vlastkz}
 
   # ПРОБА (временно)
-  - {name: "ПРОБА ndda news", type: html, url: "https://www.ndda.kz/news", link_pattern: "zzzz"}
+  - {name: "ПРОБА ndda js", type: probe_js, url: "https://www.ndda.kz/news"}
