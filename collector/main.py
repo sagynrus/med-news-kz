@@ -24,7 +24,6 @@ STATE = ROOT / "data" / "items.json"
 OUT = ROOT / "docs"
 KEEP_DAYS = 30
 FEED_SIZE = 200
-TITLE_DATE = re.compile(r"(?<!\d)(\d{1,2})[.\-/](\d{1,2})[.\-/](20\d\d)(?!\d)")
 UA = "Mozilla/5.0 (compatible; med-news-kz/1.0; +https://github.com/sagynrus/med-news-kz)"
 
 
@@ -39,18 +38,6 @@ def compile_words(words):
 
 def clean(text):
     return re.sub(r"\s+", " ", BeautifulSoup(text or "", "html.parser").get_text(" ")).strip()
-
-
-def title_date(text):
-    """Дата вида 18-09-2026 или 18.09.2026 в тексте (пресс-релизы без даты в разметке)."""
-    m = TITLE_DATE.search(text or "")
-    if not m:
-        return None
-    try:
-        d = datetime(int(m.group(3)), int(m.group(2)), int(m.group(1)), tzinfo=timezone.utc)
-    except ValueError:
-        return None
-    return d if d <= datetime.now(timezone.utc) else None
 
 
 def fetch_rss(src):
@@ -96,7 +83,7 @@ def fetch_telegram(src):
 def fetch_html(src):
     """Страница-список новостей без RSS: берём ссылки, подходящие под link_pattern.
 
-    Дату берём из текста ссылки (18-09-2026), иначе ставим время, когда новость впервые увидели.
+    Дату публикации со страницы не разбираем: ставим время, когда новость впервые увидели.
     """
     from urllib.parse import urljoin
 
@@ -130,7 +117,7 @@ def fetch_html(src):
         )
     now = datetime.now(timezone.utc)
     for link, title in found[: src.get("limit", 15)]:
-        yield {"title": title[:200], "summary": title, "link": link, "date": title_date(title) or now}
+        yield {"title": title[:200], "summary": title, "link": link, "date": now}
 
 
 def fetch_next_json(src):
@@ -259,10 +246,8 @@ def news_json(rubrics, items):
         words = sorted({m.group(0).lower() for rx in patterns.values() if (m := rx.search(text))})
         weights = [rubrics[r].get("weight", 1) for r in it["rubrics"] if r in rubrics] or [1]
         score = max(weights) + min(len(words), 5) + len(weights) - 1
-        pub = title_date(it["title"])
-        out.append({**{k: it[k] for k in ("id", "title", "summary", "link", "source", "rubrics")},
-                    "date": pub.isoformat() if pub else it["date"],
-                    "found": it["date"], "score": score, "words": words})
+        out.append({**{k: it[k] for k in ("id", "title", "summary", "link", "source", "rubrics", "date")},
+                    "score": score, "words": words})
     return json.dumps({
         "updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "rubrics": {k: {"title": r["title"], "weight": r.get("weight", 1)} for k, r in rubrics.items()},
