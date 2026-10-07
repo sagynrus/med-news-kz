@@ -368,24 +368,6 @@ def main():
     cutoff = datetime.now(timezone.utc) - timedelta(days=KEEP_DAYS)
 
     report, added = [], 0
-    if KZ_CACHE:  # ПРОБА: что скачал компьютер в Казахстане
-        for url, (path, code) in KZ_FILES.items():
-            t = path.read_bytes().decode("utf-8", "replace")
-            print("ПРОБА", code, len(t), url)
-            print("  начало:", repr(t[:400]))
-            try:
-                d = json.loads(t)
-                print("  json-ключи:", list(d)[:20] if isinstance(d, dict) else f"список из {len(d)}")
-                row = d[0] if isinstance(d, list) else next((v[0] for v in d.values() if isinstance(v, list) and v), d)
-                print("  первая запись:", {k: str(v)[:120] for k, v in row.items()})
-            except Exception as e:  # noqa: BLE001
-                print("  не JSON:", e)
-            print("  js:", sorted(set(re.findall(r"""[\w./-]+\.js\b""", t)))[:30])
-            print("  api:", sorted(set(re.findall(r"""/api/[\w./:?=&-]+""", t)))[:60])
-            print("  ссылки:", sorted(set(re.findall(r"""href=["']([^"']+)""", t)))[:80])
-            for w in ("content-manager/news", ".get(`", '.get("', "fetch(", "/api"):
-                for m in list(re.finditer(re.escape(w), t))[:4]:
-                    print("  около", w, ":", repr(t[max(0, m.start() - 250): m.end() + 250]))
     for src in sources:
         if bool(src.get("kz")) != bool(KZ_CACHE):  # каждый источник собирается только в своём месте
             continue
