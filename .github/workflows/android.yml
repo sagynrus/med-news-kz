@@ -11,6 +11,11 @@ on:
 permissions:
   contents: write
 
+# Сборки идут по очереди, чтобы в релиз не попал APK от более старой правки.
+concurrency:
+  group: android
+  cancel-in-progress: false
+
 jobs:
   apk:
     runs-on: ubuntu-latest
