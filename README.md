@@ -16,6 +16,19 @@
 Важность = вес рубрики (`weight` в `config/keywords.yaml`) + по баллу за каждое найденное ключевое слово.
 Данные страницы: `news.json` (обновляется вместе с лентами). Шаблон страницы: `collector/viewer.html`.
 
+## Приложение для Android
+
+Скачать: https://github.com/sagynrus/med-news-kz/releases/latest/download/varis.apk
+(открыть файл на телефоне, разрешить установку из этого источника).
+
+Три вкладки: «Лента» (`news.json`), «Разбор» (ночной разбор, `razbor.json`) и «Избранное»
+(звёздочка, хранится на телефоне). Данные приложение берёт с GitHub Pages при каждом открытии,
+поэтому переустанавливать его ради новых новостей не нужно.
+
+- Код: `android/` (экран приложения — `android/app/src/main/assets/index.html`).
+- APK собирает GitHub Actions («Android-приложение») при каждой правке `android/` и выкладывает в релиз `app`.
+- `razbor.json` делается из `razbor.xlsx`: `python3 collector/razbor_json.py razbor.xlsx docs/razbor.json`.
+
 ## Ленты
 
 | Лента | Файл |
