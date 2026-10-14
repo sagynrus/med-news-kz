@@ -1,6 +1,36 @@
 {
- "updated": "2026-10-13T22:10:57+00:00",
+ "updated": "2026-10-14T22:11:21+00:00",
  "items": [
+  {
+   "razbor": "2026-10-15",
+   "n": 1,
+   "lab": true,
+   "title": "Изменены стандарты онкологической и гематологической помощи в РК",
+   "source": "PharmNews.kz (сайт)",
+   "date": "2026-10-14T16:58",
+   "link": "https://pharmnews.kz/news/izmenilis-standarty-okazaniya-onkologicheskoy-i-gematologicheskoy-pomoschi-v-rk_30825",
+   "meaning": "Гематология и онкология опираются на лабораторию: новые стандарты могут поменять перечень обязательных исследований и оснащения."
+  },
+  {
+   "razbor": "2026-10-15",
+   "n": 2,
+   "lab": false,
+   "title": "Бюджет-2027: расходы на здравоохранение снизят на 200 млрд тенге, ПМСП переводят из ГОБМП в ОСМС",
+   "source": "Курсив",
+   "date": "2026-10-14T15:12",
+   "link": "https://kz.kursiv.media/2026-10-14/svan-pochemu-pravitelstvo-sokratilo-rashody-na-zdravoohranenie-v-kazahstane/?utm_source=rss&utm_medium=rss&utm_campaign=svan-pochemu-pravitelstvo-sokratilo-rashody-na-zdravoohranenie-v-kazahstane",
+   "meaning": "Поликлиники будут жить на деньги ОСМС; возможна осторожность с закупками оборудования в 2027 году."
+  },
+  {
+   "razbor": "2026-10-15",
+   "n": 3,
+   "lab": false,
+   "title": "В 9 регионах 400 медработников обучили спирометрии для раннего выявления болезней лёгких",
+   "source": "Минздрав РК",
+   "date": "2026-10-14T13:23",
+   "link": "https://t.me/DenMinPR/27427",
+   "meaning": "После обучения поликлиникам понадобятся спирометры."
+  },
   {
    "razbor": "2026-10-14",
    "n": 1,
