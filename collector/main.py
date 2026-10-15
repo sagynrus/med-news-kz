@@ -148,7 +148,23 @@ def fetch_html(src):
         )
     now = datetime.now(timezone.utc)
     for link, title in found[: src.get("limit", 15)]:
-        yield {"title": title[:200], "summary": title, "link": link, "date": now}
+        date, title = date_from_title(title)
+        yield {"title": title[:200], "summary": title, "link": link, "date": date or now}
+
+
+TITLE_DATE = re.compile(r"^(?:Пресс[- ]релиз\s*)?(\d{2})[.\-/](\d{2})[.\-/](\d{4})\s*", re.I)
+
+
+def date_from_title(title):
+    """«Пресс релиз 18-09-2026 Текст» -> (дата, «Текст»). Если даты нет: (None, title)."""
+    m = TITLE_DATE.match(title)
+    if not m:
+        return None, title
+    try:
+        date = datetime(int(m[3]), int(m[2]), int(m[1]), 12, tzinfo=timezone.utc)
+    except ValueError:
+        return None, title
+    return date, title[m.end():] or title
 
 
 def fetch_next_json(src):
@@ -362,6 +378,11 @@ def main():
     titles = {k: v["title"] for k, v in kwc["rubrics"].items()}
 
     state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else []
+    for it in state:  # новости, сохранённые до разбора дат в заголовках
+        date, title = date_from_title(it["title"])
+        if date:
+            it["date"], it["title"] = date.isoformat(), title
+            it["summary"] = date_from_title(it["summary"])[1]
     seen_links = {it["link"] for it in state}
     seen_titles = {norm_title(it["title"]) for it in state}
     seen_words = [title_words(it["title"]) for it in state]
