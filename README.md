@@ -16,6 +16,14 @@
 Важность = вес рубрики (`weight` в `config/keywords.yaml`) + по баллу за каждое найденное ключевое слово.
 Данные страницы: `news.json` (обновляется вместе с лентами). Шаблон страницы: `collector/viewer.html`.
 
+## Приложение для iPhone
+
+Открыть в Safari https://sagynrus.github.io/med-news-kz/app/, нажать «Поделиться», затем «На экран Домой».
+Появится иконка Varis, приложение открывается на весь экран, с вкладками «Лента / Разбор / Избранное».
+
+- Код: `docs/app/` (страница — копия экрана Android-приложения, данные берёт из `docs/news.json` и `docs/razbor.json`).
+- Избранное хранится на самом телефоне.
+
 ## Приложение для Android
 
 Скачать: https://github.com/sagynrus/med-news-kz/releases/latest/download/varis.apk
