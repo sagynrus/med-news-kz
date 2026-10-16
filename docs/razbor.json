@@ -1,6 +1,36 @@
 {
- "updated": "2026-10-15T22:10:32+00:00",
+ "updated": "2026-10-16T22:10:47+00:00",
  "items": [
+  {
+   "razbor": "2026-10-17",
+   "n": 1,
+   "lab": true,
+   "title": "Модернизация сельского здравоохранения: открыто только 14 из 32 запланированных многопрофильных районных больниц",
+   "source": "Turar Healthcare",
+   "date": "2026-10-16T17:54",
+   "link": "https://turar.kz/ru/news/modernizaciya-selskogo-zdravoohraneniya-vsego-14-iz-32-zaplanirovannyh-rayonnyh-bolnic-otkryli-v-kazahstane",
+   "meaning": "Ещё 18 районных больниц после капремонта предстоит оснастить, включая лаборатории: это ближайший объём закупа."
+  },
+  {
+   "razbor": "2026-10-17",
+   "n": 2,
+   "lab": false,
+   "title": "NDDA (НЦЭЛС) опубликовал разъяснение о допуске медицинских изделий на рынок Казахстана",
+   "source": "NDDA (НЦЭЛС)",
+   "date": "2026-10-16T16:57",
+   "link": "https://www.ndda.kz/news/dopusk-meditsinskih-izdeliy-na-rynok-kazahstana",
+   "meaning": "Стоит сверить с текущими процедурами регистрации ваших изделий."
+  },
+  {
+   "razbor": "2026-10-17",
+   "n": 3,
+   "lab": false,
+   "title": "В Актау обсудили инвестиции в инфраструктуру ПМСП Мангистауской области (платформа HIIP с ВОЗ)",
+   "source": "Turar Healthcare",
+   "date": "2026-10-16T15:18",
+   "link": "https://turar.kz/ru/news/v-aktau-obsudili-investicionnoe-razvitie-infrastruktury-pervichnoy-mediko-sanitarnoy-pomoschi",
+   "meaning": "Возможные будущие объекты ПМСП в регионе, пока обсуждение."
+  },
   {
    "razbor": "2026-10-16",
    "n": 1,
