@@ -422,8 +422,8 @@ def main():
         (OUT / f"{key}.xml").write_text(
             rss_xml(f"Медновости РК: {title}", title, items, base + f"{key}.xml"), encoding="utf-8")
     (OUT / "news.json").write_text(news_json(kwc["rubrics"], state), encoding="utf-8")
-    (OUT / "index.html").write_text((ROOT / "collector" / "viewer.html").read_text(encoding="utf-8"),
-                                    encoding="utf-8")
+    for page, name in (("index.html", "app.html"), ("classic.html", "classic.html")):
+        (OUT / page).write_text((ROOT / "collector" / name).read_text(encoding="utf-8"), encoding="utf-8")
 
     print("\n".join(report))
     print(f"Новых: {added}, всего в базе: {len(state)}")
