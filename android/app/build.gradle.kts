@@ -17,21 +17,28 @@ android {
         versionName = "1.$buildNumber"
     }
 
-    // Постоянный ключ из репозитория: иначе каждая сборка подписана новым ключом
-    // и телефон отказывается ставить обновление поверх. Приложение личное, не для Google Play.
+    // Ключ подписи хранится в секретах GitHub (VARIS_KEYSTORE_B64, VARIS_KEY_PASSWORD),
+    // workflow кладёт его в android/app/varis.keystore перед сборкой. Без ключа
+    // (сборка PR) APK подписывается отладочным ключом и в релиз не попадает.
+    val keystore = file("varis.keystore")
+    val varisPassword = System.getenv("VARIS_KEY_PASSWORD")
+    val hasReleaseKey = keystore.exists() && !varisPassword.isNullOrEmpty()
+
     signingConfigs {
-        create("varis") {
-            storeFile = file("varis.keystore")
-            storePassword = "varis-app"
-            keyAlias = "varis"
-            keyPassword = "varis-app"
+        if (hasReleaseKey) {
+            create("varis") {
+                storeFile = keystore
+                storePassword = varisPassword
+                keyAlias = "varis"
+                keyPassword = varisPassword
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("varis")
+            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "varis" else "debug")
         }
     }
 
