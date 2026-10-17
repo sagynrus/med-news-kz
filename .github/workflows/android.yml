@@ -29,8 +29,21 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      # Ключ подписи из секретов. Для релиза он обязателен: без него телефон
+      # не поставит обновление поверх. Сборки PR идут с отладочным ключом.
+      - name: Достать ключ подписи
+        env:
+          VARIS_KEYSTORE_B64: ${{ secrets.VARIS_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$VARIS_KEYSTORE_B64" ]; then
+            echo "$VARIS_KEYSTORE_B64" | base64 -d > android/app/varis.keystore
+          elif [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "::error::Нет секрета VARIS_KEYSTORE_B64, релиз без ключа не собираю"; exit 1
+          fi
       - name: Собрать APK
         working-directory: android
+        env:
+          VARIS_KEY_PASSWORD: ${{ secrets.VARIS_KEY_PASSWORD }}
         run: gradle --no-daemon assembleRelease
       - run: cp android/app/build/outputs/apk/release/app-release.apk varis.apk
       - uses: actions/upload-artifact@v4
