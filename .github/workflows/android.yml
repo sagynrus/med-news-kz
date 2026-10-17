@@ -37,6 +37,7 @@ jobs:
         run: |
           if [ -n "$VARIS_KEYSTORE_B64" ]; then
             echo "$VARIS_KEYSTORE_B64" | base64 -d > android/app/varis.keystore
+            echo "Ключ подписи из секретов на месте"
           elif [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "::error::Нет секрета VARIS_KEYSTORE_B64, релиз без ключа не собираю"; exit 1
           fi
