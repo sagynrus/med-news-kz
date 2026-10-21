@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Varis</title>
+<style>
+:root{
+  --bg:#0C0C11; --card:#17171F; --card2:#1F1F2A; --line:#2A2A37;
+  --text:#F4F4F7; --muted:#8C8C9C; --lime:#C8F25B; --violet:#8B7BFF;
+  --pink:#FF7AB6; --amber:#FFC56B; --cyan:#62E3FF; --red:#FF6B6B;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:Roboto,"Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.35}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+#app{max-width:560px;margin:0 auto;padding:16px 16px 110px}
+
+/* шапка */
+.top{display:flex;align-items:center;gap:12px;margin:4px 0 18px}
+.logo{width:42px;height:42px;border-radius:14px;background:var(--lime);display:grid;place-items:center;flex:none}
+.logo svg{width:26px;height:26px}
+.top h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.2px}
+.top .sub{color:var(--muted);font-size:13px}
+.top .grow{flex:1;min-width:0}
+.icon-btn{width:42px;height:42px;border-radius:14px;background:var(--card);display:grid;place-items:center;flex:none}
+.icon-btn svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.spin svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* главная карточка, как «баланс» кошелька */
+.hero{position:relative;overflow:hidden;border-radius:28px;padding:20px;margin-bottom:18px;
+  background:linear-gradient(135deg,#8B7BFF 0%,#B78BFF 45%,#FF9EC8 100%);color:#121218}
+.hero:after{content:"";position:absolute;right:-40px;top:-50px;width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,242,91,.85),rgba(200,242,91,0) 70%)}
+.hero .lbl{font-size:13px;opacity:.75;font-weight:500}
+.hero .big{font-size:44px;font-weight:800;letter-spacing:-1px;margin:2px 0 10px;position:relative;z-index:1}
+.hero .big small{font-size:16px;font-weight:600;letter-spacing:0;opacity:.7}
+.hero .row{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+.pill{background:rgba(18,18,24,.85);color:#fff;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:500;
+  display:inline-flex;align-items:center;gap:6px}
+.pill b{color:var(--lime)}
+
+/* поиск и фильтры */
+.search{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:16px;padding:0 14px;margin-bottom:12px}
+.search svg{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2;flex:none}
+.search input{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;padding:13px 0;min-width:0}
+.search input::placeholder{color:var(--muted)}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 14px;padding:0 16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border-radius:999px;padding:9px 14px;background:var(--card);color:var(--muted);font-size:14px;font-weight:500;white-space:nowrap}
+.chip.on{background:var(--lime);color:#121218}
+.sect{display:flex;align-items:baseline;justify-content:space-between;margin:6px 2px 10px}
+.sect h2{font-size:17px;margin:0}
+.sect span{color:var(--muted);font-size:13px}
+.seg{display:flex;background:var(--card);border-radius:12px;padding:3px}
+.seg button{padding:6px 10px;border-radius:9px;font-size:12px;color:var(--muted)}
+.seg button.on{background:var(--card2);color:var(--text)}
+
+/* карточки новостей */
+.card{display:flex;gap:12px;background:var(--card);border-radius:20px;padding:14px;margin-bottom:10px;align-items:flex-start}
+.card.lab{box-shadow:inset 0 0 0 1px rgba(200,242,91,.35)}
+.ava{width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;font-weight:700;font-size:14px;color:#121218}
+.body{flex:1;min-width:0}
+.title{font-weight:600;font-size:15px;margin:0 0 6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.meta{color:var(--muted);font-size:12.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:11.5px;border-radius:8px;padding:3px 8px;background:var(--card2);color:var(--muted);font-weight:500}
+.tag.lab{background:rgba(200,242,91,.15);color:var(--lime)}
+.star{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;flex:none;margin:-4px -4px 0 0}
+.star svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linejoin:round}
+.star.on svg{stroke:var(--lime);fill:var(--lime)}
+.dots{display:inline-flex;gap:2px;margin-left:2px}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--line)}
+.dots i.f{background:var(--lime)}
+.meaning{margin-top:8px;background:var(--card2);border-radius:12px;padding:9px 11px;font-size:13.5px;color:#D6D6E0}
+.meaning b{color:var(--lime);font-weight:600;font-size:12px;display:block;margin-bottom:2px}
+.num{width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;font-weight:800;font-size:16px;background:var(--card2);color:var(--text)}
+.num.lab{background:var(--lime);color:#121218}
+.day{display:flex;align-items:center;gap:10px;margin:18px 2px 10px}
+.day h3{margin:0;font-size:15px}
+.day span{color:var(--muted);font-size:12.5px}
+.day:first-child{margin-top:4px}
+.empty{text-align:center;color:var(--muted);padding:50px 20px}
+.empty .e{font-size:38px;margin-bottom:8px}
+.more{display:block;width:100%;padding:13px;border-radius:16px;background:var(--card);color:var(--muted);margin-top:4px}
+.err{background:rgba(255,107,107,.12);color:#FFB3B3;border-radius:14px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+
+/* нижнее меню */
+nav{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;width:calc(100% - 32px);max-width:420px;
+  background:rgba(28,28,38,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-radius:24px;padding:7px;display:flex;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:5}
+nav button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;border-radius:18px;color:var(--muted);font-size:13.5px;font-weight:600}
+nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+nav button.on{background:var(--lime);color:#121218}
+nav .cnt{font-size:11px;background:var(--card2);color:var(--text);border-radius:999px;padding:1px 6px}
+nav button.on .cnt{background:#121218;color:var(--lime)}
+
+/* нижняя шторка с подробностями */
+.veil{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+.veil.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:#14141B;border-radius:28px 28px 0 0;
+  padding:10px 18px 24px;transform:translateY(105%);transition:transform .25s ease;z-index:10;max-height:88vh;overflow-y:auto}
+.sheet.on{transform:none}
+.grab{width:44px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.sheet h2{font-size:19px;margin:10px 0 8px;line-height:1.3}
+.sheet p{color:#CFCFDA;margin:0 0 12px}
+.acts{display:flex;gap:8px;margin-top:16px}
+.act{flex:1;padding:13px;border-radius:16px;background:var(--card2);font-weight:600;font-size:14px}
+.act.main{background:var(--lime);color:#121218}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#121218" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h4l2-5 4 10 2-5h6"/></svg></div>
+    <div class="grow"><h1 id="hTitle">Лента</h1><div class="sub" id="hSub">Медновости Казахстана</div></div>
+    <button class="icon-btn" id="refresh" aria-label="Обновить"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg></button>
+  </div>
+  <div id="view"></div>
+</div>
+
+<nav>
+  <button data-tab="feed" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9h10M7 13h10M7 17h6"/></svg>Лента</button>
+  <button data-tab="razbor"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>Разбор</button>
+  <button data-tab="fav"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Избранное <span class="cnt" id="favCnt">0</span></button>
+</nav>
+
+<div class="veil" id="veil"></div>
+<div class="sheet" id="sheet"></div>
+
+<script>
+const BASE = "https://sagynrus.github.io/med-news-kz/";
+const RUB = {
+  lab:{t:"Лаборатория", c:"#C8F25B"}, supply:{t:"Закупки", c:"#62E3FF"},
+  devices:{t:"Изделия", c:"#FFC56B"}, build:{t:"Стройки", c:"#FF9EC8"}, law:{t:"Законы, МЗ", c:"#8B7BFF"}
+};
+const PALETTE = ["#C8F25B","#8B7BFF","#FF9EC8","#62E3FF","#FFC56B","#9BF0C0","#FF8F7A"];
+
+const st = {
+  tab:"feed", rub:"all", q:"", sort:"date", shown:40,
+  news:load("v_news", null), razbor:load("v_razbor", null),
+  fav:load("v_fav", {}), loading:false, error:""
+};
+
+function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])) }
+const $ = s => document.querySelector(s);
+
+/* ---------- данные ---------- */
+async function getJSON(name){
+  const r = await fetch(BASE + name + "?t=" + Date.now(), {cache:"no-store"});
+  if(!r.ok) throw new Error(name + ": " + r.status);
+  return r.json();
+}
+async function refresh(){
+  if(st.loading) return;
+  st.loading = true; $("#refresh").classList.add("spin");
+  const [n, r] = await Promise.allSettled([getJSON("news.json"), getJSON("razbor.json")]);
+  if(n.status === "fulfilled"){ st.news = n.value; save("v_news", n.value) }
+  if(r.status === "fulfilled"){ st.razbor = r.value; save("v_razbor", r.value) }
+  st.error = (n.status === "rejected" || r.status === "rejected")
+    ? "Нет связи с сервером, показываю сохранённое" + (st.news ? "" : ". Данных пока нет.") : "";
+  st.loading = false; $("#refresh").classList.remove("spin");
+  st.lastFetch = Date.now();
+  render();
+}
+window.onAppResume = () => { if(!st.lastFetch || Date.now() - st.lastFetch > 15*60e3) refresh() };
+
+/* ---------- избранное ---------- */
+function favKey(kind, it){ return kind + ":" + it.link }
+function isFav(kind, it){ return !!st.fav[favKey(kind, it)] }
+function toggleFav(kind, it){
+  const k = favKey(kind, it);
+  if(st.fav[k]) delete st.fav[k]; else st.fav[k] = {kind, item:it, added:Date.now()};
+  save("v_fav", st.fav); render(true);
+}
+
+/* ---------- форматирование ---------- */
+const MONTHS = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+function ago(iso){
+  if(!iso) return "";
+  const d = new Date(iso), m = (Date.now() - d) / 60e3;
+  if(m < 1) return "только что";
+  if(m < 60) return Math.round(m) + " мин назад";
+  if(m < 24*60) return Math.round(m/60) + " ч назад";
+  if(m < 48*60) return "вчера";
+  return d.getDate() + " " + MONTHS[d.getMonth()];
+}
+function dayTitle(s){
+  const d = new Date(s + "T00:00:00");
+  return isNaN(d) ? s : d.getDate() + " " + MONTHS[d.getMonth()];
+}
+function initials(src){
+  const w = String(src || "?").replace(/[()«»"]/g, " ").split(/\s+/).filter(Boolean);
+  return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || "?").slice(0, 2)).toUpperCase();
+}
+function color(src){ let h = 0; for(const c of String(src)) h = (h*31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length] }
+const starSvg = '<svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>';
+function dots(score){
+  const n = Math.max(1, Math.min(5, Math.round((score || 1) / 2)));
+  return '<span class="dots" title="Важность">' + [1,2,3,4,5].map(i => '<i class="' + (i <= n ? "f" : "") + '"></i>').join("") + '</span>';
+}
+
+/* ---------- карточки ---------- */
+let REG = [];   // объекты, на которые ссылаются кнопки в текущем экране
+function reg(kind, it){ REG.push({kind, it}); return REG.length - 1 }
+
+function newsCard(it){
+  const i = reg("news", it), lab = it.rubrics?.includes("lab");
+  return `<div class="card ${lab ? "lab" : ""}" data-open="${i}">
+    <div class="ava" style="background:${color(it.source)}">${esc(initials(it.source))}</div>
+    <div class="body">
+      <div class="title">${esc(it.title)}</div>
+      <div class="meta">${esc(it.source)} · ${ago(it.date)} ${dots(it.score)}</div>
+      <div class="tags">${(it.rubrics || []).map(r => `<span class="tag ${r === "lab" ? "lab" : ""}">${r === "lab" ? "🧪 " : ""}${esc(RUB[r]?.t || r)}</span>`).join("")}</div>
+    </div>
+    <button class="star ${isFav("news", it) ? "on" : ""}" data-fav="${i}" aria-label="В избранное">${starSvg}</button>
+  </div>`;
+}
+function razborCard(it){
+  const i = reg("razbor", it);
+  return `<div class="card ${it.lab ? "lab" : ""}" data-open="${i}">
+    <div class="num ${it.lab ? "lab" : ""}">${it.lab ? "🧪" : esc(it.n)}</div>
+    <div class="body">
+      <div class="title">${esc(it.title)}</div>
+      <div class="meta">${esc(it.source)}${it.date ? " · " + ago(it.date) : ""}</div>
+      ${it.meaning ? `<div class="meaning"><b>Что значит для закупа</b>${esc(it.meaning)}</div>` : ""}
+    </div>
+    <button class="star ${isFav("razbor", it) ? "on" : ""}" data-fav="${i}" aria-label="В избранное">${starSvg}</button>
+  </div>`;
+}
+
+/* ---------- экраны ---------- */
+function feedView(){
+  const items = st.news?.items || [];
+  const day = items.filter(x => Date.now() - new Date(x.date) < 24*3600e3);
+  const labs = items.filter(x => x.rubrics?.includes("lab"));
+  const q = st.q.trim().toLowerCase();
+  let list = items.filter(x => (st.rub === "all" || x.rubrics?.includes(st.rub)) &&
+    (!q || (x.title + " " + x.summary + " " + x.source).toLowerCase().includes(q)));
+  list.sort(st.sort === "score" ? (a, b) => (b.score - a.score) || b.date.localeCompare(a.date) : (a, b) => b.date.localeCompare(a.date));
+  const upd = st.news?.updated ? ago(st.news.updated) : "—";
+  return `
+  <div class="hero">
+    <div class="lbl">Новостей за сутки</div>
+    <div class="big">${day.length} <small>из ${items.length} за месяц</small></div>
+    <div class="row">
+      <span class="pill">🧪 Лаборатория <b>${labs.length}</b></span>
+      <span class="pill">Обновлено ${esc(upd)}</span>
+    </div>
+  </div>
+  ${st.error ? `<div class="err">${esc(st.error)}</div>` : ""}
+  <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" placeholder="Поиск: анализатор, тендер, НЦЭЛС…" value="${esc(st.q)}"></label>
+  <div class="chips">
+    <button class="chip ${st.rub === "all" ? "on" : ""}" data-rub="all">Все</button>
+    ${Object.entries(RUB).map(([k, r]) => `<button class="chip ${st.rub === k ? "on" : ""}" data-rub="${k}">${k === "lab" ? "🧪 " : ""}${r.t}</button>`).join("")}
+  </div>
+  <div class="sect"><h2>${list.length ? "Новости" : ""}</h2>
+    <div class="seg"><button data-sort="date" class="${st.sort === "date" ? "on" : ""}">Новые</button><button data-sort="score" class="${st.sort === "score" ? "on" : ""}">Важные</button></div></div>
+  ${list.length ? list.slice(0, st.shown).map(newsCard).join("") : empty(st.news ? "Ничего не найдено" : "Загружаю ленту…")}
+  ${list.length > st.shown ? `<button class="more" id="more">Показать ещё (${list.length - st.shown})</button>` : ""}`;
+}
+function razborView(){
+  const items = st.razbor?.items || [];
+  if(!items.length) return (st.error ? `<div class="err">${esc(st.error)}</div>` : "") + empty(st.razbor ? "Разборов пока нет" : "Загружаю разбор…");
+  const groups = {};
+  for(const it of items) (groups[it.razbor] ||= []).push(it);
+  return (st.error ? `<div class="err">${esc(st.error)}</div>` : "") +
+    Object.keys(groups).sort().reverse().map(d => {
+      const g = groups[d].sort((a, b) => a.n - b.n);
+      const labs = g.filter(x => x.lab).length;
+      return `<div class="day"><h3>Разбор ${dayTitle(d)}</h3><span>${g.length} ${plural(g.length, "новость", "новости", "новостей")}${labs ? " · 🧪 " + labs : ""}</span></div>` + g.map(razborCard).join("");
+    }).join("");
+}
+function favView(){
+  const all = Object.values(st.fav).sort((a, b) => b.added - a.added);
+  if(!all.length) return empty("Здесь будут новости, отмеченные звёздочкой", "☆");
+  return all.map(f => f.kind === "razbor" ? razborCard(f.item) : newsCard(f.item)).join("");
+}
+function plural(n, a, b, c){ const m = n % 100, k = n % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c }
+function empty(t, e){ return `<div class="empty"><div class="e">${e || "⌛"}</div>${esc(t)}</div>` }
+
+const HEAD = {
+  feed:["Лента", "Медновости Казахстана"],
+  razbor:["Разбор", "Главное за ночь для закупа"],
+  fav:["Избранное", "Сохранено на этом телефоне"]
+};
+function render(keepScroll){
+  REG = [];
+  const y = window.scrollY, focused = document.activeElement?.id === "q";
+  $("#hTitle").textContent = HEAD[st.tab][0];
+  $("#hSub").textContent = HEAD[st.tab][1];
+  $("#view").innerHTML = st.tab === "feed" ? feedView() : st.tab === "razbor" ? razborView() : favView();
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === st.tab));
+  $("#favCnt").textContent = Object.keys(st.fav).length;
+  if(keepScroll) window.scrollTo(0, y);
+  if(focused){ const q = $("#q"); q.focus(); q.setSelectionRange(q.value.length, q.value.length) }
+}
+
+/* ---------- шторка ---------- */
+let sheetItem = null;
+function openSheet(kind, it){
+  sheetItem = {kind, it};
+  const tags = kind === "news"
+    ? (it.rubrics || []).map(r => `<span class="tag ${r === "lab" ? "lab" : ""}">${esc(RUB[r]?.t || r)}</span>`).join("")
+    : (it.lab ? '<span class="tag lab">🧪 Лаборатория</span>' : "");
+  const date = it.date ? new Date(it.date).toLocaleString("ru-RU", {day:"numeric", month:"long", hour:"2-digit", minute:"2-digit"}) : "";
+  $("#sheet").innerHTML = `<div class="grab"></div>
+    <div class="meta">${esc(it.source)}${date ? " · " + esc(date) : ""}</div>
+    <h2>${esc(it.title)}</h2>
+    <div class="tags" style="margin-bottom:12px">${tags}</div>
+    ${it.summary ? `<p>${esc(it.summary)}${it.summary.length >= 500 ? "…" : ""}</p>` : ""}
+    ${it.meaning ? `<div class="meaning" style="margin-bottom:12px"><b>Что значит для закупа</b>${esc(it.meaning)}</div>` : ""}
+    ${it.words?.length ? `<div class="meta">Ключевые слова: ${esc(it.words.join(", "))}</div>` : ""}
+    <div class="acts">
+      <button class="act" id="sFav">${isFav(kind, it) ? "★ Сохранено" : "☆ Сохранить"}</button>
+      <button class="act" id="sShare">Поделиться</button>
+      <button class="act main" id="sOpen">Открыть</button>
+    </div>`;
+  $("#veil").classList.add("on"); $("#sheet").classList.add("on"); $("#sheet").scrollTop = 0;
+}
+function closeSheet(){ $("#veil").classList.remove("on"); $("#sheet").classList.remove("on"); sheetItem = null }
+window.goBack = () => {
+  if(sheetItem){ closeSheet(); return true }
+  if(st.tab !== "feed"){ st.tab = "feed"; render(); window.scrollTo(0, 0); return true }
+  return false;
+};
+function openLink(url){ if(window.Varis) Varis.open(url); else window.open(url, "_blank") }
+
+/* ---------- события ---------- */
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-fav],[data-open],[data-tab],[data-rub],[data-sort],#more,#refresh,#veil,#sFav,#sShare,#sOpen");
+  if(!t) return;
+  if(t.dataset.fav !== undefined){ const r = REG[+t.dataset.fav]; toggleFav(r.kind, r.it); return }
+  if(t.dataset.open !== undefined){ const r = REG[+t.dataset.open]; openSheet(r.kind, r.it); return }
+  if(t.dataset.tab){ st.tab = t.dataset.tab; render(); window.scrollTo(0, 0); return }
+  if(t.dataset.rub){ st.rub = t.dataset.rub; st.shown = 40; render(true); return }
+  if(t.dataset.sort){ st.sort = t.dataset.sort; st.shown = 40; render(true); return }
+  if(t.id === "more"){ st.shown += 40; render(true); return }
+  if(t.id === "refresh"){ refresh(); return }
+  if(t.id === "veil"){ closeSheet(); return }
+  if(!sheetItem) return;
+  const {kind, it} = sheetItem;
+  if(t.id === "sFav"){ toggleFav(kind, it); openSheet(kind, it) }
+  if(t.id === "sOpen") openLink(it.link);
+  if(t.id === "sShare"){
+    const text = it.title + "\n" + it.link;
+    if(window.Varis) Varis.share(text); else if(navigator.share) navigator.share({text}); else navigator.clipboard?.writeText(text);
+  }
+});
+document.addEventListener("input", e => {
+  if(e.target.id === "q"){ st.q = e.target.value; st.shown = 40; render(true) }
+});
+
+render();
+refresh();
+</script>
+</body>
+</html>
