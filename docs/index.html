@@ -46,53 +46,78 @@ li.item{background:var(--card);border:1px solid var(--line);border-radius:10px;p
 .tools{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .tools button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px}
 footer{margin:24px 0 8px;font-size:13px;color:var(--muted)}
+/* Переключатель RU/EN: статичные тексты лежат парами <span lang="ru"> / <span lang="en"> */
+html:not(.en) [lang="en"]{display:none!important}
+html.en [lang="ru"]{display:none!important}
+.lang{display:flex;background:var(--chip);border-radius:999px;padding:3px;margin-left:auto;align-self:center}
+.lang button{border:0;background:none;color:var(--muted);font-weight:600;font-size:13px;padding:6px 11px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--accent);color:var(--card)}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header><h1>Медновости РК</h1><span class="muted" id="updated">Загрузка…</span><a class="muted" href="app/">📱 Приложение Varis для телефона</a></header>
+<header><h1><span lang="ru">Медновости РК</span><span lang="en">Kazakhstan healthcare news</span></h1><span class="muted" id="updated">…</span><a class="muted" href="app/"><span lang="ru">📱 Приложение Varis для телефона</span><span lang="en">📱 Varis phone app</span></a>
+  <div class="lang" role="group" aria-label="Language"><button type="button" id="lang-ru" aria-pressed="true">RU</button><button type="button" id="lang-en" aria-pressed="false">EN</button></div></header>
 
 <div class="tabs">
-  <button class="tab" id="tab-all" aria-pressed="true">Все новости</button>
-  <button class="tab" id="tab-fav" aria-pressed="false">★ Избранное <span id="fav-count"></span></button>
+  <button class="tab" id="tab-all" aria-pressed="true"><span lang="ru">Все новости</span><span lang="en">All news</span></button>
+  <button class="tab" id="tab-fav" aria-pressed="false">★ <span lang="ru">Избранное</span><span lang="en">Favorites</span> <span id="fav-count"></span></button>
 </div>
 
 <div class="controls">
   <input id="q" type="search" placeholder="Поиск по заголовку, тексту, источнику">
   <select id="sort">
-    <option value="score">Сначала важные</option>
-    <option value="date">Сначала новые</option>
+    <option value="score" data-ru="Сначала важные" data-en="Most important first">Сначала важные</option>
+    <option value="date" data-ru="Сначала новые" data-en="Newest first">Сначала новые</option>
   </select>
   <select id="period">
-    <option value="3">3 дня</option>
-    <option value="7">7 дней</option>
-    <option value="30" selected>30 дней</option>
+    <option value="3" data-ru="3 дня" data-en="3 days">3 дня</option>
+    <option value="7" data-ru="7 дней" data-en="7 days">7 дней</option>
+    <option value="30" data-ru="30 дней" data-en="30 days" selected>30 дней</option>
   </select>
-  <select id="source"><option value="">Все источники</option></select>
+  <select id="source"><option value="" data-ru="Все источники" data-en="All sources">Все источники</option></select>
 </div>
 <div class="chips" id="chips"></div>
 
 <div class="tools" id="fav-tools" hidden>
-  <button id="export">Скачать избранное (JSON)</button>
+  <button id="export"><span lang="ru">Скачать избранное (JSON)</span><span lang="en">Download favorites (JSON)</span></button>
   <button id="copy">Скопировать списком</button>
-  <button id="import-btn" type="button">Загрузить из файла</button><input id="import" type="file" accept=".json" hidden>
+  <button id="import-btn" type="button"><span lang="ru">Загрузить из файла</span><span lang="en">Load from file</span></button><input id="import" type="file" accept=".json" hidden>
 </div>
 
 <ul id="list"></ul>
 
 <footer>
-  Важность: вес рубрики (лаборатория 5, оборудование и изделия 3, стройки и приказы 2) + по баллу за каждое найденное ключевое слово.
-  Избранное хранится в этом браузере.<br>
-  RSS: <a href="feed.xml">все рубрики</a> · <a href="lab.xml">лаборатории</a> · <a href="build.xml">стройки</a> ·
-  <a href="supply.xml">закупки</a> · <a href="law.xml">приказы</a> · <a href="devices.xml">медизделия</a>
+  <span lang="ru">Важность: вес рубрики (лаборатория 5, оборудование и изделия 3, стройки и приказы 2) + по баллу за каждое найденное ключевое слово.
+  Избранное хранится в этом браузере.</span>
+  <span lang="en">Importance: section weight (lab 5, equipment and devices 3, construction and orders 2) plus one point for each keyword found.
+  News titles are shown as published, in Russian or Kazakh. Favorites are stored in this browser.</span><br>
+  RSS: <a href="feed.xml"><span lang="ru">все рубрики</span><span lang="en">all sections</span></a> · <a href="lab.xml"><span lang="ru">лаборатории</span><span lang="en">lab</span></a> · <a href="build.xml"><span lang="ru">стройки</span><span lang="en">construction</span></a> ·
+  <a href="supply.xml"><span lang="ru">закупки</span><span lang="en">procurement</span></a> · <a href="law.xml"><span lang="ru">приказы</span><span lang="en">orders</span></a> · <a href="devices.xml"><span lang="ru">медизделия</span><span lang="en">devices</span></a>
 </footer>
 </div>
 
 <script>
 const FAV_KEY = "mednews.favorites";
 const PREF_KEY = "mednews.prefs";
-const state = {data: null, view: "all", rubric: "", q: "", sort: "score", period: 30, source: ""};
+const state = {data: null, view: "all", rubric: "", q: "", sort: "score", period: 30, source: "", lang: "ru"};
 const $ = id => document.getElementById(id);
+
+// Подписи на двух языках. Заголовки и тексты новостей остаются как в источнике (по-русски или по-казахски).
+const UI = {
+  ru: {search: "Поиск по заголовку, тексту, источнику", allRubrics: "Все рубрики", emptyFav: "В избранном пока ничего нет. Нажмите ☆ у новости, чтобы сохранить её.",
+       empty: "Нет новостей по выбранным условиям.", note: "Заметка к новости", score: "Важность", unfav: "Убрать из избранного", fav: "В избранное",
+       copy: "Скопировать списком", copied: "Скопировано", copyFail: "Не удалось скопировать", noteLabel: "Заметка", badFile: "Файл не похож на выгрузку избранного",
+       loading: "Загрузка…", fail: "Не удалось загрузить новости", updated: (d, n) => `Обновлено ${d} · ${n} новостей за 30 дней`, locale: "ru-RU"},
+  en: {search: "Search titles, text, source", allRubrics: "All sections", emptyFav: "No favorites yet. Tap ☆ on a news item to save it.",
+       empty: "No news for these filters.", note: "Note for this item", score: "Importance", unfav: "Remove from favorites", fav: "Add to favorites",
+       copy: "Copy as list", copied: "Copied", copyFail: "Could not copy", noteLabel: "Note", badFile: "This file does not look like a favorites export",
+       loading: "Loading…", fail: "Could not load news", updated: (d, n) => `Updated ${d} · ${n} news items in 30 days`, locale: "en-GB"}
+};
+const RUBRIC_EN = {lab: "Lab diagnostics and analyzers", build: "Hospital construction and openings", supply: "Re-equipment, procurement and supply",
+                   law: "Orders, legislation, Ministry of Health", devices: "Medical devices and registration"};
+const t = k => UI[state.lang][k];
+const rubricTitle = key => state.lang === "en" ? (RUBRIC_EN[key] || state.data.rubrics[key]?.title || key) : (state.data.rubrics[key]?.title || key);
 
 function load(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -105,7 +130,7 @@ Object.assign(state, load(PREF_KEY, {}), {view: "all"});
 
 function fmtDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString("ru-RU", {day: "numeric", month: "short", year: "numeric"});
+  return d.toLocaleDateString(t("locale"), {day: "numeric", month: "short", year: "numeric"});
 }
 function scoreClass(s) { return s >= 8 ? "s-hi" : s >= 5 ? "s-mid" : ""; }
 
@@ -145,9 +170,9 @@ function renderChips() {
     class: "chip", "aria-pressed": String(state.rubric === key),
     onclick: () => { state.rubric = key; persist(); render(); }
   }, label, el("b", {}, String(n)));
-  chips.append(mk("", "Все рубрики", base.length));
-  for (const [key, r] of Object.entries(state.data.rubrics))
-    chips.append(mk(key, r.title, base.filter(it => it.rubrics.includes(key)).length));
+  chips.append(mk("", t("allRubrics"), base.length));
+  for (const key of Object.keys(state.data.rubrics))
+    chips.append(mk(key, rubricTitle(key), base.filter(it => it.rubrics.includes(key)).length));
 }
 
 function renderList() {
@@ -155,28 +180,26 @@ function renderList() {
   const items = filtered();
   list.replaceChildren();
   if (!items.length) {
-    list.append(el("li", {class: "empty"}, state.view === "fav"
-      ? "В избранном пока ничего нет. Нажмите ☆ у новости, чтобы сохранить её."
-      : "Нет новостей по выбранным условиям."));
+    list.append(el("li", {class: "empty"}, state.view === "fav" ? t("emptyFav") : t("empty")));
     return;
   }
   for (const it of items) {
     const fav = favs[it.id];
-    const rubricNames = it.rubrics.map(r => state.data.rubrics[r]?.title || r).join(", ");
+    const rubricNames = it.rubrics.map(rubricTitle).join(", ");
     const body = el("div", {class: "body"},
       el("a", {class: "title", href: it.link, target: "_blank", rel: "noopener"}, it.title),
       el("div", {class: "meta"}, `${fmtDate(it.date)} · ${it.source} · ${rubricNames}`),
       it.summary && it.summary !== it.title ? el("div", {class: "sum"}, it.summary) : null,
       it.words?.length ? el("div", {}, ...it.words.map(w => el("span", {class: "tag"}, w))) : null);
     if (fav) {
-      const note = el("input", {class: "note", placeholder: "Заметка к новости", value: fav.note || ""});
+      const note = el("input", {class: "note", placeholder: t("note"), value: fav.note || ""});
       note.addEventListener("input", () => { fav.note = note.value; save(FAV_KEY, favs); });
       body.append(note);
     }
     list.append(el("li", {class: "item"},
-      el("div", {class: "score " + scoreClass(it.score), title: "Важность"}, String(it.score)),
+      el("div", {class: "score " + scoreClass(it.score), title: t("score")}, String(it.score)),
       body,
-      el("button", {class: "star", "aria-pressed": String(!!fav), title: fav ? "Убрать из избранного" : "В избранное",
+      el("button", {class: "star", "aria-pressed": String(!!fav), title: fav ? t("unfav") : t("fav"),
         onclick: () => toggleFav(it)}, fav ? "★" : "☆")));
   }
 }
@@ -221,10 +244,10 @@ function bind() {
   };
   $("copy").onclick = async () => {
     const text = filtered().map(it => `${fmtDate(it.date)} · ${it.source}\n${it.title}\n${it.link}` +
-      (favs[it.id]?.note ? `\nЗаметка: ${favs[it.id].note}` : "")).join("\n\n");
-    try { await navigator.clipboard.writeText(text); $("copy").textContent = "Скопировано"; }
-    catch { $("copy").textContent = "Не удалось скопировать"; }
-    setTimeout(() => $("copy").textContent = "Скопировать списком", 2000);
+      (favs[it.id]?.note ? `\n${t("noteLabel")}: ${favs[it.id].note}` : "")).join("\n\n");
+    try { await navigator.clipboard.writeText(text); $("copy").textContent = t("copied"); }
+    catch { $("copy").textContent = t("copyFail"); }
+    setTimeout(() => $("copy").textContent = t("copy"), 2000);
   };
   $("import-btn").onclick = () => $("import").click();
   $("import").onchange = async e => {
@@ -233,23 +256,50 @@ function bind() {
         if (f?.item?.id) favs[f.item.id] = f;
       save(FAV_KEY, favs);
       render();
-    } catch { alert("Файл не похож на выгрузку избранного"); }
+    } catch { alert(t("badFile")); }
   };
+  $("lang-ru").onclick = () => setLang("ru");
+  $("lang-en").onclick = () => setLang("en");
+}
+
+function header() {
+  if (!state.data) { $("updated").textContent = state.failed ? t("fail") : t("loading"); return; }
+  $("updated").textContent = t("updated")(new Date(state.data.updated).toLocaleString(t("locale")), state.data.items.length);
+}
+
+// Язык: ?lang=en в адресе (так ссылается sagynrus.kz в английской версии) или прошлый выбор в этом браузере.
+function setLang(l) {
+  state.lang = l === "en" ? "en" : "ru";
+  const root = document.documentElement;
+  root.classList.toggle("en", state.lang === "en");
+  root.lang = state.lang;
+  $("lang-ru").setAttribute("aria-pressed", String(state.lang === "ru"));
+  $("lang-en").setAttribute("aria-pressed", String(state.lang === "en"));
+  $("q").placeholder = t("search");
+  $("copy").textContent = t("copy");
+  for (const o of document.querySelectorAll("option[data-ru]")) o.textContent = o.dataset[state.lang];
+  try { localStorage.setItem("lang", state.lang); } catch {}
+  header();
+  if (state.data) render();
 }
 
 async function init() {
   bind();
+  let saved = new URLSearchParams(location.search).get("lang");
+  if (!saved) { try { saved = localStorage.getItem("lang"); } catch {} }
+  setLang(saved);
   try {
     const r = await fetch("news.json", {cache: "no-cache"});
     state.data = await r.json();
   } catch {
-    $("updated").textContent = "Не удалось загрузить новости";
+    state.failed = true;
+    header();
     return;
   }
   // В избранном держим свежую версию новости, пока она есть в ленте.
   for (const it of state.data.items) if (favs[it.id]) favs[it.id].item = it;
   save(FAV_KEY, favs);
-  $("updated").textContent = `Обновлено ${new Date(state.data.updated).toLocaleString("ru-RU")} · ${state.data.items.length} новостей за 30 дней`;
+  header();
   const sources = [...new Set(state.data.items.map(it => it.source))].sort((a, b) => a.localeCompare(b, "ru"));
   for (const s of sources) $("source").append(el("option", {value: s}, s));
   $("source").value = state.source;
