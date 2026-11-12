@@ -1,6 +1,106 @@
 {
- "updated": "2026-11-07T22:03:47+00:00",
+ "updated": "2026-11-12T07:29:11+00:00",
  "items": [
+  {
+   "razbor": "2026-11-12",
+   "n": 1,
+   "lab": false,
+   "title": "В Иргизском районе Актюбинской области строят поликлинику за 1,3 млрд тенге",
+   "source": "Курсив",
+   "date": "2026-11-11T09:25",
+   "link": "https://kz.kursiv.media/2026-11-11/lsbs-v-aktyubinskoi-oblasti-postroyat-polikliniku-za-13-mlrd-tengge/?utm_source=rss&utm_medium=rss&utm_campaign=lsbs-v-aktyubinskoi-oblasti-postroyat-polikliniku-za-13-mlrd-tengge",
+   "meaning": "Новая поликлиника на 300 посещений в смену при районной больнице: после строительства потребуется базовое оснащение, следите за закупом через акимат/заказчика."
+  },
+  {
+   "razbor": "2026-11-12",
+   "n": 2,
+   "lab": false,
+   "title": "Казахстан предложил ЕАЭС, Центральной Азии и ОТГ объединить закупки лекарств и вакцин",
+   "source": "PharmNews.kz (сайт)",
+   "date": "2026-11-11T11:29",
+   "link": "https://pharmnews.kz/news/kazahstan-predlozhil-stranam-eaes-tsentralnoy-azii-i-otg-obedinit-zakupki-lekarstv-i-vaktsin_37651",
+   "meaning": "Идея совместных закупок пока на уровне предложения; если дойдёт до медизделий, изменятся правила и объёмы тендеров."
+  },
+  {
+   "razbor": "2026-11-12",
+   "n": 3,
+   "lab": false,
+   "title": "В Алматы создали Центр компетенций по закупу медицинского ПО",
+   "source": "Курсив",
+   "date": "2026-11-11T16:18",
+   "link": "https://kz.kursiv.media/2026-11-11/lsbs-czentr-sozdannyi-v-covid-vozglavit-czifrovizacziyu-medicziny-almaty/?utm_source=rss&utm_medium=rss&utm_campaign=lsbs-czentr-sozdannyi-v-covid-vozglavit-czifrovizacziyu-medicziny-almaty",
+   "meaning": "Закуп медсофта в алматинских медорганизациях будет идти по единому стандарту; поставщикам оборудования с ПО нужна совместимость с ним."
+  },
+  {
+   "razbor": "2026-11-11",
+   "n": 1,
+   "lab": false,
+   "title": "Маркировка расширяется на медицинские изделия",
+   "source": "PharmNews.kz (сайт)",
+   "date": "2026-11-10T19:56",
+   "link": "https://pharmnews.kz/news/markirovka-meditsinskoy-produktsii-rasshiryaetsya-teper-ochered-za-medizdeliyami_67828",
+   "meaning": "Подготовьтесь к обязательной маркировке медизделий: коды, учёт и ввод в оборот добавят процедур и затрат в поставке."
+  },
+  {
+   "razbor": "2026-11-11",
+   "n": 2,
+   "lab": false,
+   "title": "Правительство обсудило строительство и модернизацию объектов здравоохранения в регионах",
+   "source": "Turar Healthcare",
+   "date": "2026-11-10T13:02",
+   "link": "https://turar.kz/ru/news/predsedatel-pravleniya-nao-turar-healthcare-askar-horoshash-prinyal-uchastie-v-soveschanii-po-voprosam-stroitelstva-i-modernizacii-obektov-zdravoohraneniya-v-regionah",
+   "meaning": "Совещание 9 ноября с участием Turar Healthcare: идут проекты новых объектов, впереди закупы оснащения."
+  },
+  {
+   "razbor": "2026-11-11",
+   "n": 3,
+   "lab": false,
+   "title": "Казахстан и Турция утвердили план сотрудничества в здравоохранении на 2027–2028",
+   "source": "Курсив",
+   "date": "2026-11-10T16:16",
+   "link": "https://kz.kursiv.media/2026-11-10/lsbs-novye-kliniki-i-it-tehnologii-o-chem-dogovorilis-minzdravy-kazahstana-i-turczii/?utm_source=rss&utm_medium=rss&utm_campaign=lsbs-novye-kliniki-i-it-tehnologii-o-chem-dogovorilis-minzdravy-kazahstana-i-turczii",
+   "meaning": "Среди направлений — инфраструктура и новые клиники; возможна конкуренция турецких поставщиков в проектах."
+  },
+  {
+   "razbor": "2026-11-10",
+   "n": 1,
+   "lab": true,
+   "title": "Обновлены санитарные требования к лабораториям и правила биобезопасности",
+   "source": "PharmNews.kz (сайт)",
+   "date": "2026-11-09T11:40",
+   "link": "https://pharmnews.kz/news/obnovleny-sanitarnye-trebovaniya-k-laboratoriyam-i-pravila-biologicheskoy-bezopasnosti_58190",
+   "meaning": "Лаборатории должны привести помещения и процессы к новым требованиям: возможен спрос на оборудование и расходники под них."
+  },
+  {
+   "razbor": "2026-11-10",
+   "n": 2,
+   "lab": false,
+   "title": "Постановление № 978: Правительство уточнило полномочия Минздрава",
+   "source": "PharmNews.kz",
+   "date": "2026-11-09T10:22",
+   "link": "https://t.me/pharmnewskz/9016",
+   "meaning": "Минздрав утверждает перечни лекарств и медизделий для амбулаторного обеспечения и закупа у Единого дистрибьютора — это определяет, что попадёт в закуп."
+  },
+  {
+   "razbor": "2026-11-10",
+   "n": 3,
+   "lab": false,
+   "title": "Минздрав ужесточает госнадзор за оборотом лекарств и медизделий",
+   "source": "Минздрав РК",
+   "date": "2026-11-09T11:29",
+   "link": "https://t.me/DenMinPR/27782",
+   "meaning": "Проект приказа: больше проверок оборота и незарегистрированной продукции; проверьте регистрацию и документы на медизделия."
+  },
+  {
+   "razbor": "2026-11-10",
+   "n": 4,
+   "lab": false,
+   "title": "В Туркестане на 88% построена многопрофильная больница, оснащение — в 2027 году",
+   "source": "Курсив",
+   "date": "2026-11-09T11:37",
+   "link": "https://kz.kursiv.media/2026-11-09/lsbs-gotovnost-88-v-turkestane-zavershayut-stroitelstvo-mnogoprofilnoi-bolniczy/?utm_source=rss&utm_medium=rss&utm_campaign=lsbs-gotovnost-88-v-turkestane-zavershayut-stroitelstvo-mnogoprofilnoi-bolniczy",
+   "meaning": "Здание сдадут к концу 2026, оборудование закупят в 2027: крупный лот на оснащение, начинайте работу с заказчиком."
+  },
   {
    "razbor": "2026-11-08",
    "n": 1,
